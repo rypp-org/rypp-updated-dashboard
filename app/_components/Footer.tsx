@@ -11,7 +11,7 @@ const quick = [
   { label: "Home", href: "/" },
   { label: "Vehicles", href: "/#vehicles" },
   { label: "How It Works", href: "/#how-it-works" },
-  { label: "About", href: "/#about" },
+  { label: "About", href: "/about" },
   { label: "Career", href: "/#contact" },
   { label: "Contact", href: "/#contact" },
 ];

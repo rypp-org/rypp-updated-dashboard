@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ArrowRight, ChevronDown, MapPin, Menu, User, X } from "lucide-react";
 import { navLinks } from "../_lib/data";
@@ -8,6 +9,7 @@ import { Logo } from "./Logo";
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 shadow-[0_1px_0_rgba(15,23,42,0.06),0_8px_24px_-18px_rgba(15,23,42,0.18)] backdrop-blur">
@@ -15,19 +17,26 @@ export function Header() {
         <Logo />
 
         <nav aria-label="Primary" className="hidden items-center gap-8 lg:flex">
-          {navLinks.map((l, i) => (
-            <Link
-              key={l.label}
-              href={l.href}
-              aria-current={i === 0 ? "page" : undefined}
-              className={`relative py-2 text-[13px] font-medium transition-colors hover:text-brand ${
-                i === 0 ? "text-brand" : "text-ink/80"
-              }`}
-            >
-              {l.label}
-              {i === 0 && <span className="absolute inset-x-0 -bottom-[7px] h-0.5 rounded bg-brand" />}
-            </Link>
-          ))}
+          {navLinks.map((l) => {
+            const isActive =
+              pathname === l.href ||
+              (l.href !== "/" && pathname?.startsWith(l.href));
+            return (
+              <Link
+                key={l.label}
+                href={l.href}
+                aria-current={isActive ? "page" : undefined}
+                className={`relative py-2 text-[13px] font-medium transition-colors hover:text-brand ${
+                  isActive ? "text-brand font-semibold" : "text-ink/80"
+                }`}
+              >
+                {l.label}
+                {isActive && (
+                  <span className="absolute inset-x-0 -bottom-[7px] h-0.5 rounded bg-brand" />
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-2.5">
@@ -68,17 +77,24 @@ export function Header() {
       {open && (
         <nav id="mobile-nav" aria-label="Mobile" className="border-t border-line bg-white px-5 pb-4 pt-2 lg:hidden">
           <ul className="flex flex-col">
-            {navLinks.map((l, i) => (
-              <li key={l.label}>
-                <Link
-                  href={l.href}
-                  onClick={() => setOpen(false)}
-                  className={`block border-b border-line/60 py-3 text-sm font-medium ${i === 0 ? "text-brand" : "text-ink"}`}
-                >
-                  {l.label}
-                </Link>
-              </li>
-            ))}
+            {navLinks.map((l) => {
+              const isActive =
+                pathname === l.href ||
+                (l.href !== "/" && pathname?.startsWith(l.href));
+              return (
+                <li key={l.label}>
+                  <Link
+                    href={l.href}
+                    onClick={() => setOpen(false)}
+                    className={`block border-b border-line/60 py-3 text-sm font-medium ${
+                      isActive ? "text-brand font-semibold" : "text-ink"
+                    }`}
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
       )}
