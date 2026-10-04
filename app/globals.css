@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0b1119;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand: #e4202c;
+  --color-brand-dark: #c4121d;
+  --color-ink: #0b1119;
+  --color-blush: #fdecee;
+  --color-muted: #5b6472;
+  --color-line: #e8eaee;
+  --font-sans: var(--font-poppins);
+  --font-script: var(--font-kaushan);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* anchors sit below the sticky header */
+[id] {
+  scroll-margin-top: 96px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
