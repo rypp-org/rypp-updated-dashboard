@@ -56,7 +56,7 @@ export function PopularVehicles() {
               ))}
             </div>
           </div>
-          <ViewAll href="#vehicles" />
+          <ViewAll href="/vehicles" />
         </div>
 
         <ul className="mt-7 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
@@ -65,7 +65,7 @@ export function PopularVehicles() {
               key={v.id}
               className="group flex flex-col rounded-2xl border border-line bg-white p-3.5 shadow-[0_10px_30px_-22px_rgba(11,17,25,0.45)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_34px_-20px_rgba(11,17,25,0.5)]"
             >
-              <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-line/40">
+              <Link href={`/vehicles/${v.id}`} className="relative aspect-[4/3] overflow-hidden rounded-lg bg-line/40 block">
                 <span className="absolute left-2 top-2 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-ink shadow-sm backdrop-blur">
                   {categoryBadge[v.category]}
                 </span>
@@ -76,8 +76,10 @@ export function PopularVehicles() {
                   sizes="(min-width: 1280px) 200px, (min-width: 768px) 33vw, 50vw"
                   className="object-cover transition duration-300 group-hover:scale-110"
                 />
-              </div>
-              <h3 className="mt-3 min-h-[2.5rem] text-[13px] font-bold leading-tight text-ink">{v.name}</h3>
+              </Link>
+              <h3 className="mt-3 min-h-[2.5rem] text-[13px] font-bold leading-tight text-ink hover:text-brand transition">
+                <Link href={`/vehicles/${v.id}`}>{v.name}</Link>
+              </h3>
               <p className="mt-1.5 flex items-center gap-1 self-start rounded-full bg-line/50 px-2 py-0.5 text-[11px] text-muted">
                 <Star className="size-3 fill-amber-400 text-amber-400" aria-hidden />
                 <span className="font-semibold text-ink/80">{v.rating.toFixed(1)}</span>
@@ -88,7 +90,7 @@ export function PopularVehicles() {
                 <span className="text-xs font-semibold text-muted"> / day</span>
               </p>
               <Link
-                href="#contact"
+                href={`/vehicles/${v.id}`}
                 className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-md bg-brand py-2.5 text-center text-xs font-semibold text-white transition hover:bg-brand-dark"
               >
                 Book Now

@@ -56,7 +56,7 @@ export function Header() {
             Sign In
           </Link>
           <Link
-            href="/#vehicles"
+            href="/vehicles"
             className="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_8px_20px_-8px_rgba(228,32,44,0.7)] transition hover:bg-brand-dark hover:shadow-[0_10px_24px_-10px_rgba(228,32,44,0.8)]"
           >
             Book Now <ArrowRight className="size-4" aria-hidden />
