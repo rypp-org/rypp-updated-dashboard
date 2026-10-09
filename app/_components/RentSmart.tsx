@@ -17,15 +17,15 @@ export function RentSmart() {
       <div className="absolute inset-0 bg-gradient-to-r from-ink/90 via-ink/55 to-transparent" />
 
       <Container className="relative">
-        <div className="flex flex-col justify-between gap-8 pb-8 pt-10 md:flex-row md:items-start">
+        <div className="flex flex-col justify-between gap-8 pb-6 pt-8 sm:pb-8 sm:pt-10 md:flex-row md:items-start">
           <div className="max-w-[520px]">
-            <h2 className="text-[30px] font-bold tracking-tight sm:text-[34px]">Rent Smart. Ride Happy.</h2>
-            <p className="mt-3 text-[13px] leading-6 text-white/85 sm:text-sm">
+            <h2 className="text-[22px] font-bold leading-tight tracking-tight sm:text-[28px] lg:text-[34px]">Rent Smart. Ride Happy.</h2>
+            <p className="mt-2.5 text-[13px] leading-relaxed text-white/85 sm:mt-3 sm:text-sm sm:leading-6">
               Whether it&rsquo;s a quick city ride or a long road trip,{" "}
               <br className="hidden sm:block" />
               RYPP makes vehicle rental simple, affordable and hassle-free.
             </p>
-            <RedButton href="#vehicles" className="mt-6">
+            <RedButton href="#vehicles" className="mt-5 sm:mt-6">
               Explore Vehicles
             </RedButton>
           </div>
@@ -39,11 +39,14 @@ export function RentSmart() {
           </p>
         </div>
 
-        <ul className="grid grid-cols-2 gap-y-5 border-t border-white/15 py-6 lg:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-x-3 gap-y-4 border-t border-white/15 py-5 sm:gap-y-5 sm:py-6 lg:grid-cols-4">
           {uses.map(({ icon: Icon, label }) => (
-            <li key={label} className="flex items-center gap-4 lg:justify-start">
-              <Icon className="h-11 shrink-0 text-white" />
-              <span className="text-[13px] font-semibold">{label}</span>
+            <li key={label} className="flex min-w-0 items-center gap-2.5 sm:gap-4 lg:justify-start">
+              {/* fixed square so the differently-proportioned traced glyphs render at one size */}
+              <span className="grid size-8 shrink-0 place-items-center sm:size-11">
+                <Icon className="h-full max-w-full text-white" />
+              </span>
+              <span className="min-w-0 text-[12px] font-semibold leading-snug sm:text-[13px]">{label}</span>
             </li>
           ))}
         </ul>

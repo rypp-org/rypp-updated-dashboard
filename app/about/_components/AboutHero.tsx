@@ -19,13 +19,13 @@ export function AboutHero() {
               <span>ABOUT RYPP</span>
             </div>
 
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl lg:text-5xl xl:text-[54px] lg:leading-[1.12]">
+            <h1 className="mt-4 text-[28px] font-extrabold leading-tight tracking-tight text-ink sm:text-4xl lg:text-5xl xl:text-[54px] lg:leading-[1.12]">
               More Roads.<br />
               More People.<br />
               <span className="text-brand">A More Connected India.</span>
             </h1>
 
-            <p className="mt-5 text-sm leading-relaxed text-muted sm:text-base lg:text-[15px]">
+            <p className="mt-5 text-[13px] leading-relaxed text-muted sm:text-base lg:text-[15px]">
               RYPP is a technology-driven mobility platform making bike and car rentals simple, transparent, and reliable. We believe everyone should have the freedom to explore, travel, work, and live on their own terms — anytime, anywhere.
             </p>
 
@@ -54,7 +54,8 @@ export function AboutHero() {
             </div>
 
             {/* Stats highlight row */}
-            <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-3.5">
+            {/* 4-up only where the column is wide enough: full-width tablets, and very wide desktops */}
+            <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2 lg:gap-3.5 2xl:grid-cols-4">
               <div className="flex items-center gap-3 rounded-xl border border-line/80 bg-slate-50/70 p-3.5 transition hover:border-brand/30 hover:bg-white hover:shadow-sm">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
                   <Car className="size-5" />
@@ -123,7 +124,7 @@ export function AboutHero() {
               {/* Calligraphic Handwriting Badge Top Center/Right */}
               <div className="absolute left-6 top-6 sm:left-8 sm:top-8">
                 <div className="relative inline-block rotate-[-4deg]">
-                  <span className="font-script text-3xl font-bold tracking-wide text-white drop-shadow-md sm:text-4xl md:text-5xl">
+                  <span className="font-script text-2xl font-bold tracking-wide text-white drop-shadow-md sm:text-4xl md:text-5xl">
                     Ride <span className="text-brand drop-shadow">Your Way.</span>
                   </span>
                   <div className="mt-0.5 h-1 w-full rounded-full bg-gradient-to-r from-brand to-red-400" />
@@ -132,7 +133,7 @@ export function AboutHero() {
 
               {/* Bottom Right Calligraphic Script Badge */}
               <div className="absolute bottom-6 right-6 text-right sm:bottom-8 sm:right-8">
-                <span className="font-script text-xl font-medium text-white/90 drop-shadow sm:text-2xl lg:text-3xl">
+                <span className="font-script text-lg font-medium text-white/90 drop-shadow sm:text-2xl lg:text-3xl">
                   Good Rides, Brighter Stories
                 </span>
               </div>
@@ -151,13 +152,14 @@ export function AboutHero() {
             className="relative w-full max-w-3xl overflow-hidden rounded-2xl bg-ink shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-              <h3 className="text-base font-semibold text-white">
+            <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-6 sm:py-4">
+              <h3 className="text-sm font-semibold text-white sm:text-base">
                 About RYPP — Ride Your Way
               </h3>
               <button
                 type="button"
                 onClick={() => setVideoOpen(false)}
+                aria-label="Close video"
                 className="rounded-lg p-1 text-white/70 transition hover:bg-white/10 hover:text-white"
               >
                 <X className="size-5" />

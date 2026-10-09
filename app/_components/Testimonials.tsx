@@ -16,11 +16,11 @@ export function Testimonials() {
       <Image src={images.redMountains} alt="" fill sizes="50vw" className="object-cover opacity-70 mix-blend-multiply grayscale" />
       <div className="absolute inset-0 bg-gradient-to-r from-brand/70 via-brand/30 to-transparent" />
       <div className="relative mx-auto flex h-full max-w-[664px] flex-col px-5 py-10 sm:px-8 md:ml-auto md:mr-0 md:pl-8 lg:pl-[max(2rem,calc((100vw-1328px)/2+2rem))] lg:pr-10">
-        <h2 className="text-[26px] font-bold tracking-tight">What Our Riders Say</h2>
+        <h2 className="text-[22px] font-bold sm:text-[26px] tracking-tight">What Our Riders Say</h2>
         <p className="mt-1 text-[13px] text-white/90">Real people. Real journeys. Real freedom.</p>
 
         <div className="relative mt-6" aria-live="polite">
-          <figure className="rounded-xl bg-white px-12 py-5 text-ink shadow-[0_18px_40px_-20px_rgba(0,0,0,0.5)]">
+          <figure className="rounded-xl bg-white px-11 py-5 text-ink sm:px-12 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.5)]">
             <blockquote className="min-h-[60px] text-[13px] leading-relaxed">&ldquo;{t.quote}&rdquo;</blockquote>
             <figcaption className="mt-4 flex items-center gap-3">
               <Image src={t.avatar} alt="" width={40} height={40} unoptimized className="size-10 rounded-full object-cover" />

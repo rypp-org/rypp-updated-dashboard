@@ -57,13 +57,13 @@ export function Header() {
           </Link>
           <Link
             href="/vehicles"
-            className="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_8px_20px_-8px_rgba(228,32,44,0.7)] transition hover:bg-brand-dark hover:shadow-[0_10px_24px_-10px_rgba(228,32,44,0.8)]"
+            className="hidden items-center gap-2 whitespace-nowrap rounded-lg bg-brand px-5 py-2.5 text-[13px] sm:inline-flex font-semibold text-white shadow-[0_8px_20px_-8px_rgba(228,32,44,0.7)] transition hover:bg-brand-dark hover:shadow-[0_10px_24px_-10px_rgba(228,32,44,0.8)]"
           >
             Book Now <ArrowRight className="size-4" aria-hidden />
           </Link>
           <button
             type="button"
-            className="inline-flex size-10 items-center justify-center rounded-lg border border-line transition hover:bg-line/30 lg:hidden"
+            className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-line transition hover:bg-line/30 lg:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             aria-controls="mobile-nav"
@@ -96,6 +96,33 @@ export function Header() {
               );
             })}
           </ul>
+          {/* location + sign in are hidden in the bar below md, so surface them here */}
+          <div className="mt-4 grid grid-cols-2 gap-2.5 md:hidden">
+            <button
+              type="button"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-line px-3 py-2.5 text-[13px] font-semibold text-ink transition hover:border-brand/40 hover:bg-line/30"
+            >
+              <MapPin className="size-4 text-brand" aria-hidden />
+              Bengaluru
+              <ChevronDown className="size-3.5 text-muted" aria-hidden />
+            </button>
+            <Link
+              href="/#contact"
+              onClick={() => setOpen(false)}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-line px-3 py-2.5 text-[13px] font-semibold text-ink transition hover:border-brand/40 hover:bg-line/30"
+            >
+              <User className="size-4" aria-hidden />
+              Sign In
+            </Link>
+          </div>
+          {/* Book Now is dropped from the bar on phones, so it lives in the menu there */}
+          <Link
+            href="/vehicles"
+            onClick={() => setOpen(false)}
+            className="mt-2.5 flex items-center justify-center gap-2 rounded-lg bg-brand py-2.5 text-[13px] font-semibold text-white sm:hidden"
+          >
+            Book Now <ArrowRight className="size-4" aria-hidden />
+          </Link>
         </nav>
       )}
     </header>

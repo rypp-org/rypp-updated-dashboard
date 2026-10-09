@@ -9,10 +9,10 @@ export function Destinations() {
       <Container>
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 id="destinations" className="text-[28px] font-bold tracking-tight text-ink sm:text-[34px]">
+            <h2 id="destinations" className="text-[22px] font-bold tracking-tight text-ink sm:text-[28px] lg:text-[34px]">
               Popular Destinations
             </h2>
-            <p className="mt-1.5 text-sm text-muted">Top places our riders love to explore.</p>
+            <p className="mt-1.5 text-[13px] text-muted sm:text-sm">Top places our riders love to explore.</p>
           </div>
           <ViewAll href="#destinations" />
         </div>

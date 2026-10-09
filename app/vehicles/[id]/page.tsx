@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "../../_components/Header";
 import { Footer } from "../../_components/Footer";
-import { ALL_VEHICLES, getVehicleDetails } from "../../_lib/vehiclesData";
+import { ALL_VEHICLES, defaultTripDates, getVehicleDetails } from "../../_lib/vehiclesData";
 import { VehicleDetailPageContent } from "./_components/VehicleDetailPageContent";
 
 interface PageProps {
@@ -31,7 +31,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
       <>
         <Header />
         <main className="flex-1">
-          <VehicleDetailPageContent vehicle={vehicle} />
+          <VehicleDetailPageContent vehicle={vehicle} dates={defaultTripDates()} />
         </main>
         <Footer />
       </>
@@ -44,7 +44,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
     <>
       <Header />
       <main className="flex-1">
-        <VehicleDetailPageContent vehicle={vehicleDetails} />
+        <VehicleDetailPageContent vehicle={vehicleDetails} dates={defaultTripDates()} />
       </main>
       <Footer />
     </>

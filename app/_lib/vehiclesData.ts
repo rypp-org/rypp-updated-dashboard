@@ -335,6 +335,36 @@ export const ALL_VEHICLES: Vehicle[] = [
   },
 ];
 
+// --- Booking helpers (shared by the detail page and the booking page) ---
+
+export const TIME_SLOTS = [
+  "09:00 AM",
+  "10:00 AM",
+  "11:00 AM",
+  "12:00 PM",
+  "02:00 PM",
+  "04:00 PM",
+  "06:00 PM",
+  "08:00 PM",
+];
+
+export const SERVICE_FEE = 49;
+
+/** yyyy-mm-dd in local time (the format <input type="date"> uses) */
+export function toIsoDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** today, plus a default pickup tomorrow and drop the day after */
+export function defaultTripDates() {
+  const today = new Date();
+  const pickup = new Date(today);
+  pickup.setDate(today.getDate() + 1);
+  const drop = new Date(today);
+  drop.setDate(today.getDate() + 2);
+  return { today: toIsoDate(today), pickup: toIsoDate(pickup), drop: toIsoDate(drop) };
+}
+
 export function getVehicleDetails(id: string): VehicleDetail {
   const base = ALL_VEHICLES.find((v) => v.id === id) || ALL_VEHICLES[0];
 

@@ -32,10 +32,10 @@ export function WhyRypp() {
       <Container>
         <div className="grid gap-8 lg:grid-cols-[1.9fr_1fr]">
           <div>
-            <h2 id="why-rypp" className="text-[28px] font-bold tracking-tight text-ink sm:text-[34px]">
+            <h2 id="why-rypp" className="text-[22px] font-bold tracking-tight text-ink sm:text-[28px] lg:text-[34px]">
               Why RYPP?
             </h2>
-            <p className="mt-1.5 text-sm text-muted">More than just rentals — a better way to move.</p>
+            <p className="mt-1.5 text-[13px] text-muted sm:text-sm">More than just rentals — a better way to move.</p>
             <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
               {reasons.map(({ icon: Icon, title, text }) => (
                 <li key={title} className="rounded-2xl border border-line bg-white px-3 py-6 text-center">
@@ -49,14 +49,15 @@ export function WhyRypp() {
             </ul>
           </div>
 
-          <div className="relative flex flex-col items-center gap-6 overflow-hidden rounded-2xl bg-blush p-6 text-center sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-7 sm:text-left">
+          {/* side-by-side on sm and xl; stacked at lg where the sidebar column is too narrow for text + phone */}
+          <div className="relative flex flex-col items-center gap-6 overflow-hidden rounded-2xl bg-blush p-6 text-center sm:flex-row sm:items-center sm:justify-around sm:gap-4 sm:p-7 sm:text-left lg:flex-col lg:text-center xl:flex-row xl:justify-between xl:text-left">
             <div className="min-w-0">
-              <h3 className="text-xl font-bold leading-tight text-ink">
+              <h3 className="text-lg font-bold leading-tight text-ink sm:text-xl">
                 Download the
                 <br />
                 RYPP App
               </h3>
-              <div className="mt-2 flex justify-center gap-2 sm:justify-start" aria-hidden>
+              <div className="mt-2 flex justify-center gap-2 sm:justify-start lg:justify-center xl:justify-start" aria-hidden>
                 <span className="h-0.5 w-9 rounded-full bg-brand" />
                 <span className="h-0.5 w-9 rounded-full bg-brand" />
               </div>
@@ -65,7 +66,7 @@ export function WhyRypp() {
                 <br />
                 your rides on the go.
               </p>
-              <div className="mt-4 flex flex-col items-center gap-2 sm:items-start">
+              <div className="mt-4 flex flex-col items-center gap-2 sm:items-start lg:items-center xl:items-start">
                 <Link
                   href="#contact"
                   className="inline-flex w-[132px] items-center gap-2 rounded-md bg-ink px-3 py-1.5 text-white transition hover:bg-black"

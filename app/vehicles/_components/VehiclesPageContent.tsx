@@ -27,11 +27,9 @@ import {
   ALL_VEHICLES,
   FuelType,
   TransmissionType,
-  Vehicle,
   VehicleCategory,
 } from "../../_lib/vehiclesData";
 import { Container } from "../../_components/ui";
-import { BookingModal } from "./BookingModal";
 
 // Custom Scooter SVG Icon for header pills
 function ScooterIcon({ className = "size-4" }: { className?: string }) {
@@ -69,7 +67,6 @@ export function VehiclesPageContent() {
   const [wishlist, setWishlist] = useState<string[]>([]);
   
   // Modals & Drawers
-  const [bookingVehicle, setBookingVehicle] = useState<Vehicle | null>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -179,20 +176,261 @@ export function VehiclesPageContent() {
     );
   }, [brandSearch]);
 
+  // Shared by the desktop sidebar and the mobile drawer so both expose the same filters
+  const filterSections = (
+    <>
+      {/* Vehicle Type Filter */}
+      <div className="border-b border-line pb-5">
+        <button
+          onClick={() => toggleAccordion("vehicleType")}
+          className="flex w-full items-center justify-between text-sm font-bold text-ink"
+        >
+          <span>Vehicle Type</span>
+          {openAccordion.vehicleType ? (
+            <ChevronUp className="size-4 text-muted" />
+          ) : (
+            <ChevronDown className="size-4 text-muted" />
+          )}
+        </button>
+        {openAccordion.vehicleType && (
+          <div className="mt-3.5 space-y-2.5 text-xs">
+            <label className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium">
+              <input
+                type="checkbox"
+                checked={selectedCategory === "all"}
+                onChange={() => {
+                  setSelectedCategory("all");
+                  setCurrentPage(1);
+                }}
+                className="accent-brand size-4 rounded"
+              />
+              <span>All Vehicles ({ALL_VEHICLES.length})</span>
+            </label>
+
+            <label className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
+              <input
+                type="checkbox"
+                checked={selectedCategory === "bike"}
+                onChange={() => {
+                  setSelectedCategory(selectedCategory === "bike" ? "all" : "bike");
+                  setCurrentPage(1);
+                }}
+                className="accent-brand size-4 rounded"
+              />
+              <span>Bikes ({ALL_VEHICLES.filter((v) => v.category === "bike").length})</span>
+            </label>
+
+            <label className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
+              <input
+                type="checkbox"
+                checked={selectedCategory === "scooter"}
+                onChange={() => {
+                  setSelectedCategory(selectedCategory === "scooter" ? "all" : "scooter");
+                  setCurrentPage(1);
+                }}
+                className="accent-brand size-4 rounded"
+              />
+              <span>Scooters ({ALL_VEHICLES.filter((v) => v.category === "scooter").length})</span>
+            </label>
+
+            <label className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
+              <input
+                type="checkbox"
+                checked={selectedCategory === "car"}
+                onChange={() => {
+                  setSelectedCategory(selectedCategory === "car" ? "all" : "car");
+                  setCurrentPage(1);
+                }}
+                className="accent-brand size-4 rounded"
+              />
+              <span>Cars ({ALL_VEHICLES.filter((v) => v.category === "car").length})</span>
+            </label>
+          </div>
+        )}
+      </div>
+
+      {/* Price Range Slider Filter */}
+      <div className="border-b border-line pb-5">
+        <button
+          onClick={() => toggleAccordion("priceRange")}
+          className="flex w-full items-center justify-between text-sm font-bold text-ink"
+        >
+          <span>Price Range <span className="text-muted text-xs font-normal">(per day)</span></span>
+          {openAccordion.priceRange ? (
+            <ChevronUp className="size-4 text-muted" />
+          ) : (
+            <ChevronDown className="size-4 text-muted" />
+          )}
+        </button>
+        {openAccordion.priceRange && (
+          <div className="mt-3.5 space-y-3">
+            <input
+              type="range"
+              min="400"
+              max="10000"
+              step="100"
+              value={maxPrice}
+              onChange={(e) => {
+                setMaxPrice(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="w-full accent-brand h-1.5 bg-gray-200 rounded-lg cursor-pointer"
+            />
+            <div className="flex justify-between text-xs font-semibold text-muted">
+              <span>₹ 0</span>
+              <span className="text-brand font-bold">₹ {maxPrice.toLocaleString()}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Fuel Type Filter */}
+      <div className="border-b border-line pb-5">
+        <button
+          onClick={() => toggleAccordion("fuelType")}
+          className="flex w-full items-center justify-between text-sm font-bold text-ink"
+        >
+          <span>Fuel Type</span>
+          {openAccordion.fuelType ? (
+            <ChevronUp className="size-4 text-muted" />
+          ) : (
+            <ChevronDown className="size-4 text-muted" />
+          )}
+        </button>
+        {openAccordion.fuelType && (
+          <div className="mt-3.5 space-y-2.5 text-xs">
+            {(["Petrol", "Diesel", "Electric"] as FuelType[]).map((fuel) => {
+              const count = ALL_VEHICLES.filter((v) => v.fuelType === fuel).length;
+              const isChecked = selectedFuel.includes(fuel);
+              return (
+                <label key={fuel} className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => {
+                      setSelectedFuel((prev) =>
+                        isChecked ? prev.filter((f) => f !== fuel) : [...prev, fuel]
+                      );
+                      setCurrentPage(1);
+                    }}
+                    className="accent-brand size-4 rounded"
+                  />
+                  <span>{fuel} ({count})</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Transmission Filter */}
+      <div className="border-b border-line pb-5">
+        <button
+          onClick={() => toggleAccordion("transmission")}
+          className="flex w-full items-center justify-between text-sm font-bold text-ink"
+        >
+          <span>Transmission</span>
+          {openAccordion.transmission ? (
+            <ChevronUp className="size-4 text-muted" />
+          ) : (
+            <ChevronDown className="size-4 text-muted" />
+          )}
+        </button>
+        {openAccordion.transmission && (
+          <div className="mt-3.5 space-y-2.5 text-xs">
+            {(["Manual", "Automatic"] as TransmissionType[]).map((trans) => {
+              const count = ALL_VEHICLES.filter((v) => v.transmission === trans).length;
+              const isChecked = selectedTransmission.includes(trans);
+              return (
+                <label key={trans} className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => {
+                      setSelectedTransmission((prev) =>
+                        isChecked ? prev.filter((t) => t !== trans) : [...prev, trans]
+                      );
+                      setCurrentPage(1);
+                    }}
+                    className="accent-brand size-4 rounded"
+                  />
+                  <span>{trans} ({count})</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Brand Filter */}
+      <div>
+        <button
+          onClick={() => toggleAccordion("brand")}
+          className="flex w-full items-center justify-between text-sm font-bold text-ink"
+        >
+          <span>Brand</span>
+          {openAccordion.brand ? (
+            <ChevronUp className="size-4 text-muted" />
+          ) : (
+            <ChevronDown className="size-4 text-muted" />
+          )}
+        </button>
+        {openAccordion.brand && (
+          <div className="mt-3.5 space-y-3">
+            {/* Brand search box */}
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 size-3.5 text-muted" />
+              <input
+                type="text"
+                value={brandSearch}
+                onChange={(e) => setBrandSearch(e.target.value)}
+                placeholder="Search brand..."
+                className="w-full rounded-lg border border-line bg-gray-50 py-2 pl-8 pr-3 text-xs text-ink placeholder:text-muted focus:border-brand focus:outline-none"
+              />
+            </div>
+
+            <div className="max-h-44 overflow-y-auto space-y-2 text-xs pr-1 scrollbar-thin">
+              {allBrands.map((b) => {
+                const count = ALL_VEHICLES.filter((v) => v.brand === b).length;
+                const isChecked = selectedBrands.includes(b);
+                return (
+                  <label key={b} className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => {
+                        setSelectedBrands((prev) =>
+                          isChecked ? prev.filter((brand) => brand !== b) : [...prev, b]
+                        );
+                        setCurrentPage(1);
+                      }}
+                      className="accent-brand size-4 rounded"
+                    />
+                    <span>{b} ({count})</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div className="bg-[#f8f9fa] text-ink min-h-screen pb-16">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-xl bg-ink px-4 py-3 text-sm font-medium text-white shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
-          <span>{toastMessage}</span>
-          <button onClick={() => setToastMessage(null)} className="text-white/60 hover:text-white">
+        <div className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:left-auto sm:right-6 z-50 rounded-xl bg-ink px-4 py-3 text-sm font-medium text-white shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
+          <span className="flex-1">{toastMessage}</span>
+          <button onClick={() => setToastMessage(null)} aria-label="Dismiss" className="text-white/60 hover:text-white">
             <X className="size-4" />
           </button>
         </div>
       )}
 
       {/* --- HERO BANNER SECTION --- */}
-      <section className="relative overflow-hidden bg-ink py-16 lg:py-20">
+      <section className="relative overflow-hidden bg-ink py-12 sm:py-16 lg:py-20">
         {/* Background Image with Dark Overlay */}
         <div className="pointer-events-none absolute inset-0 z-0">
           <Image
@@ -200,6 +438,7 @@ export function VehiclesPageContent() {
             alt="Mountains banner background"
             fill
             priority
+            sizes="100vw"
             className="object-cover opacity-40 mix-blend-luminosity"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-ink/90 via-ink/80 to-transparent" />
@@ -211,11 +450,11 @@ export function VehiclesPageContent() {
               <span className="inline-block text-xs font-bold uppercase tracking-[0.25em] text-brand bg-brand/10 px-3 py-1 rounded-full border border-brand/20">
                 BIKE &bull; CAR &bull; RENTALS
               </span>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+              <h1 className="text-[28px] min-[400px]:text-[32px] sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
                 Find Your <br />
                 <span className="text-brand">Perfect Ride</span>
               </h1>
-              <p className="text-white/80 text-base sm:text-lg max-w-xl font-normal leading-relaxed pt-1">
+              <p className="text-white/80 text-sm sm:text-lg max-w-xl font-normal leading-relaxed pt-1">
                 Choose from a wide range of bikes, scooters and cars for every journey.
                 Affordable. Flexible. Reliable.
               </p>
@@ -234,7 +473,7 @@ export function VehiclesPageContent() {
           </div>
 
           {/* --- FLOATING SEARCH BAR CARD --- */}
-          <div className="mt-10 max-w-4xl">
+          <div className="mt-8 sm:mt-10 max-w-4xl">
             <div className="bg-white rounded-2xl p-2.5 sm:p-3 shadow-2xl border border-line flex flex-col sm:flex-row items-center gap-3">
               <div className="relative flex-1 w-full flex items-center">
                 <Search className="absolute left-4 size-5 text-brand shrink-0" />
@@ -251,6 +490,7 @@ export function VehiclesPageContent() {
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
+                    aria-label="Clear search"
                     className="pr-3 text-muted hover:text-ink"
                   >
                     <X className="size-4" />
@@ -271,10 +511,10 @@ export function VehiclesPageContent() {
 
       {/* --- CATEGORY TABS & SORT BAR --- */}
       <section className="bg-white border-b border-line sticky top-[76px] lg:top-[88px] z-30 shadow-xs">
-        <Container className="py-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            {/* Category Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+        <Container className="py-3 sm:py-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 lg:gap-4">
+            {/* Category Pills: scroll sideways on narrow screens instead of overflowing the page */}
+            <div className="-mx-5 flex min-w-0 items-center gap-2 overflow-x-auto px-5 scrollbar-none sm:mx-0 sm:px-0">
               <button
                 onClick={() => {
                   setSelectedCategory("all");
@@ -337,34 +577,39 @@ export function VehiclesPageContent() {
             </div>
 
             {/* Counter info & Sort Dropdown */}
-            <div className="flex items-center justify-between md:justify-end gap-4 text-xs">
+            <div className="flex flex-wrap items-center justify-between lg:justify-end gap-x-4 gap-y-2 text-xs">
               <span className="text-muted font-medium">
-                Showing <strong className="text-ink font-bold">{filteredVehicles.length}</strong> vehicles in Bengaluru
+                <span className="hidden sm:inline">Showing </span>
+                <strong className="text-ink font-bold">{filteredVehicles.length}</strong> vehicles
+                <span className="hidden sm:inline"> in Bengaluru</span>
               </span>
 
-              {/* Mobile Filter Drawer Button */}
-              <button
-                onClick={() => setMobileFiltersOpen(true)}
-                className="lg:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-line bg-white font-semibold text-ink"
-              >
-                <SlidersHorizontal className="size-3.5 text-brand" />
-                Filters
-              </button>
-
-              {/* Sort By Dropdown */}
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-muted font-semibold hidden sm:inline">Sort By</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="rounded-lg border border-line bg-white px-3 py-2 text-xs font-semibold text-ink focus:border-brand focus:outline-none shadow-2xs"
+              <div className="flex items-center gap-2">
+                {/* Mobile Filter Drawer Button */}
+                <button
+                  onClick={() => setMobileFiltersOpen(true)}
+                  className="lg:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-line bg-white font-semibold text-ink"
                 >
+                  <SlidersHorizontal className="size-3.5 text-brand" />
+                  Filters
+                </button>
+
+                {/* Sort By Dropdown */}
+                <label className="flex items-center gap-2 shrink-0">
+                  <span className="text-muted font-semibold hidden sm:inline">Sort By</span>
+                  <span className="sr-only sm:hidden">Sort By</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="max-w-[150px] sm:max-w-none rounded-lg border border-line bg-white px-3 py-2 text-xs font-semibold text-ink focus:border-brand focus:outline-none shadow-2xs"
+                  >
                   <option value="recommended">Recommended</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
                   <option value="rating">Rating: High to Low</option>
-                  <option value="name">Name: A to Z</option>
-                </select>
+                    <option value="name">Name: A to Z</option>
+                  </select>
+                </label>
               </div>
             </div>
           </div>
@@ -372,247 +617,13 @@ export function VehiclesPageContent() {
       </section>
 
       {/* --- MAIN PAGE CONTENT: SIDEBAR + GRID --- */}
-      <Container className="pt-8">
-        <div className="grid lg:grid-cols-[270px_1fr] gap-8 items-start">
-          
+      <Container className="pt-6 sm:pt-8">
+        <div className="grid lg:grid-cols-[250px_1fr] xl:grid-cols-[270px_1fr] gap-6 xl:gap-8 items-start">
+
           {/* ================= SIDEBAR FILTERS (DESKTOP) ================= */}
-          <aside className="hidden lg:block bg-white rounded-2xl border border-line p-5 shadow-xs space-y-6">
+          <aside className="hidden lg:block lg:sticky lg:top-[168px] lg:max-h-[calc(100dvh-184px)] lg:overflow-y-auto scrollbar-thin bg-white rounded-2xl border border-line p-5 shadow-xs space-y-6">
             
-            {/* Vehicle Type Filter */}
-            <div className="border-b border-line pb-5">
-              <button
-                onClick={() => toggleAccordion("vehicleType")}
-                className="flex w-full items-center justify-between text-sm font-bold text-ink"
-              >
-                <span>Vehicle Type</span>
-                {openAccordion.vehicleType ? (
-                  <ChevronUp className="size-4 text-muted" />
-                ) : (
-                  <ChevronDown className="size-4 text-muted" />
-                )}
-              </button>
-              {openAccordion.vehicleType && (
-                <div className="mt-3.5 space-y-2.5 text-xs">
-                  <label className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium">
-                    <input
-                      type="checkbox"
-                      checked={selectedCategory === "all"}
-                      onChange={() => {
-                        setSelectedCategory("all");
-                        setCurrentPage(1);
-                      }}
-                      className="accent-brand size-4 rounded"
-                    />
-                    <span>All Vehicles ({ALL_VEHICLES.length})</span>
-                  </label>
-
-                  <label className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
-                    <input
-                      type="checkbox"
-                      checked={selectedCategory === "bike"}
-                      onChange={() => {
-                        setSelectedCategory(selectedCategory === "bike" ? "all" : "bike");
-                        setCurrentPage(1);
-                      }}
-                      className="accent-brand size-4 rounded"
-                    />
-                    <span>Bikes ({ALL_VEHICLES.filter((v) => v.category === "bike").length})</span>
-                  </label>
-
-                  <label className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
-                    <input
-                      type="checkbox"
-                      checked={selectedCategory === "scooter"}
-                      onChange={() => {
-                        setSelectedCategory(selectedCategory === "scooter" ? "all" : "scooter");
-                        setCurrentPage(1);
-                      }}
-                      className="accent-brand size-4 rounded"
-                    />
-                    <span>Scooters ({ALL_VEHICLES.filter((v) => v.category === "scooter").length})</span>
-                  </label>
-
-                  <label className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
-                    <input
-                      type="checkbox"
-                      checked={selectedCategory === "car"}
-                      onChange={() => {
-                        setSelectedCategory(selectedCategory === "car" ? "all" : "car");
-                        setCurrentPage(1);
-                      }}
-                      className="accent-brand size-4 rounded"
-                    />
-                    <span>Cars ({ALL_VEHICLES.filter((v) => v.category === "car").length})</span>
-                  </label>
-                </div>
-              )}
-            </div>
-
-            {/* Price Range Slider Filter */}
-            <div className="border-b border-line pb-5">
-              <button
-                onClick={() => toggleAccordion("priceRange")}
-                className="flex w-full items-center justify-between text-sm font-bold text-ink"
-              >
-                <span>Price Range <span className="text-muted text-xs font-normal">(per day)</span></span>
-                {openAccordion.priceRange ? (
-                  <ChevronUp className="size-4 text-muted" />
-                ) : (
-                  <ChevronDown className="size-4 text-muted" />
-                )}
-              </button>
-              {openAccordion.priceRange && (
-                <div className="mt-3.5 space-y-3">
-                  <input
-                    type="range"
-                    min="400"
-                    max="10000"
-                    step="100"
-                    value={maxPrice}
-                    onChange={(e) => {
-                      setMaxPrice(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="w-full accent-brand h-1.5 bg-gray-200 rounded-lg cursor-pointer"
-                  />
-                  <div className="flex justify-between text-xs font-semibold text-muted">
-                    <span>₹ 0</span>
-                    <span className="text-brand font-bold">₹ {maxPrice.toLocaleString()}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Fuel Type Filter */}
-            <div className="border-b border-line pb-5">
-              <button
-                onClick={() => toggleAccordion("fuelType")}
-                className="flex w-full items-center justify-between text-sm font-bold text-ink"
-              >
-                <span>Fuel Type</span>
-                {openAccordion.fuelType ? (
-                  <ChevronUp className="size-4 text-muted" />
-                ) : (
-                  <ChevronDown className="size-4 text-muted" />
-                )}
-              </button>
-              {openAccordion.fuelType && (
-                <div className="mt-3.5 space-y-2.5 text-xs">
-                  {(["Petrol", "Diesel", "Electric"] as FuelType[]).map((fuel) => {
-                    const count = ALL_VEHICLES.filter((v) => v.fuelType === fuel).length;
-                    const isChecked = selectedFuel.includes(fuel);
-                    return (
-                      <label key={fuel} className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => {
-                            setSelectedFuel((prev) =>
-                              isChecked ? prev.filter((f) => f !== fuel) : [...prev, fuel]
-                            );
-                            setCurrentPage(1);
-                          }}
-                          className="accent-brand size-4 rounded"
-                        />
-                        <span>{fuel} ({count})</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Transmission Filter */}
-            <div className="border-b border-line pb-5">
-              <button
-                onClick={() => toggleAccordion("transmission")}
-                className="flex w-full items-center justify-between text-sm font-bold text-ink"
-              >
-                <span>Transmission</span>
-                {openAccordion.transmission ? (
-                  <ChevronUp className="size-4 text-muted" />
-                ) : (
-                  <ChevronDown className="size-4 text-muted" />
-                )}
-              </button>
-              {openAccordion.transmission && (
-                <div className="mt-3.5 space-y-2.5 text-xs">
-                  {(["Manual", "Automatic"] as TransmissionType[]).map((trans) => {
-                    const count = ALL_VEHICLES.filter((v) => v.transmission === trans).length;
-                    const isChecked = selectedTransmission.includes(trans);
-                    return (
-                      <label key={trans} className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => {
-                            setSelectedTransmission((prev) =>
-                              isChecked ? prev.filter((t) => t !== trans) : [...prev, trans]
-                            );
-                            setCurrentPage(1);
-                          }}
-                          className="accent-brand size-4 rounded"
-                        />
-                        <span>{trans} ({count})</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Brand Filter */}
-            <div>
-              <button
-                onClick={() => toggleAccordion("brand")}
-                className="flex w-full items-center justify-between text-sm font-bold text-ink"
-              >
-                <span>Brand</span>
-                {openAccordion.brand ? (
-                  <ChevronUp className="size-4 text-muted" />
-                ) : (
-                  <ChevronDown className="size-4 text-muted" />
-                )}
-              </button>
-              {openAccordion.brand && (
-                <div className="mt-3.5 space-y-3">
-                  {/* Brand search box */}
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 size-3.5 text-muted" />
-                    <input
-                      type="text"
-                      value={brandSearch}
-                      onChange={(e) => setBrandSearch(e.target.value)}
-                      placeholder="Search brand..."
-                      className="w-full rounded-lg border border-line bg-gray-50 py-2 pl-8 pr-3 text-xs text-ink placeholder:text-muted focus:border-brand focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="max-h-44 overflow-y-auto space-y-2 text-xs pr-1 scrollbar-thin">
-                    {allBrands.map((b) => {
-                      const count = ALL_VEHICLES.filter((v) => v.brand === b).length;
-                      const isChecked = selectedBrands.includes(b);
-                      return (
-                        <label key={b} className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => {
-                              setSelectedBrands((prev) =>
-                                isChecked ? prev.filter((brand) => brand !== b) : [...prev, b]
-                              );
-                              setCurrentPage(1);
-                            }}
-                            className="accent-brand size-4 rounded"
-                          />
-                          <span>{b} ({count})</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+            {filterSections}
 
             {/* Clear Filters Button */}
             <button
@@ -627,7 +638,7 @@ export function VehiclesPageContent() {
           {/* ================= VEHICLE CARDS GRID ================= */}
           <main className="space-y-8">
             {currentItems.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {currentItems.map((vehicle) => {
                   const isWishlisted = wishlist.includes(vehicle.id);
                   return (
@@ -642,7 +653,7 @@ export function VehiclesPageContent() {
                             src={vehicle.image}
                             alt={vehicle.name}
                             fill
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            sizes="(min-width: 1280px) 300px, (min-width: 640px) 50vw, 100vw"
                             className="object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         </Link>
@@ -661,9 +672,9 @@ export function VehiclesPageContent() {
                       </div>
 
                       {/* Card Content */}
-                      <div className="p-5 flex flex-col flex-1 justify-between space-y-4">
+                      <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between space-y-4">
                         <div className="space-y-1.5">
-                          <h3 className="font-bold text-ink text-base line-clamp-1 group-hover:text-brand transition-colors">
+                          <h3 className="font-bold text-ink text-[15px] sm:text-base line-clamp-1 group-hover:text-brand transition-colors">
                             <Link href={`/vehicles/${vehicle.id}`}>{vehicle.name}</Link>
                           </h3>
 
@@ -678,7 +689,7 @@ export function VehiclesPageContent() {
 
                           {/* Price */}
                           <div className="pt-2 flex items-baseline gap-1">
-                            <span className="text-lg font-extrabold text-ink">
+                            <span className="text-base sm:text-lg font-extrabold text-ink">
                               ₹ {vehicle.pricePerDay.toLocaleString()}
                             </span>
                             <span className="text-xs text-muted font-medium">/ day</span>
@@ -696,12 +707,14 @@ export function VehiclesPageContent() {
                         </div>
 
                         {/* Action Button */}
-                        <button
-                          onClick={() => setBookingVehicle(vehicle)}
-                          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-brand py-3 text-xs font-semibold text-white shadow-md transition hover:bg-brand-dark hover:shadow-lg"
+                        <Link
+                          href={`/vehicles/${vehicle.id}/book`}
+                          // phones: soft tint so the CTA doesn't outweigh the photo/price; solid red from sm up
+                          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blush py-2.5 text-xs font-semibold text-brand sm:transition sm:bg-brand sm:py-3 sm:text-white sm:shadow-md sm:hover:bg-brand-dark sm:hover:shadow-lg"
                         >
                           Book Now <ArrowRight className="size-3.5" />
-                        </button>
+                          <span className="sr-only"> {vehicle.name}</span>
+                        </Link>
                       </div>
                     </div>
                   );
@@ -709,11 +722,11 @@ export function VehiclesPageContent() {
               </div>
             ) : (
               /* Empty state */
-              <div className="rounded-2xl border border-line bg-white p-12 text-center space-y-4">
+              <div className="rounded-2xl border border-line bg-white p-8 sm:p-12 text-center space-y-4">
                 <div className="mx-auto grid size-16 place-items-center rounded-full bg-gray-100 text-muted">
                   <Search className="size-8" />
                 </div>
-                <h3 className="text-lg font-bold text-ink">No vehicles matched your search</h3>
+                <h3 className="text-base sm:text-lg font-bold text-ink">No vehicles matched your search</h3>
                 <p className="text-xs text-muted max-w-md mx-auto">
                   Try adjusting your filter options, clearing the brand search, or lowering the price filter.
                 </p>
@@ -728,7 +741,7 @@ export function VehiclesPageContent() {
 
             {/* ================= PAGINATION ================= */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-4">
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
@@ -766,11 +779,12 @@ export function VehiclesPageContent() {
         </div>
 
         {/* --- WEEKLY OFFER PROMO BANNER --- */}
-        <div className="mt-16 relative overflow-hidden rounded-3xl bg-ink p-8 lg:p-12 shadow-xl border border-line">
+        <div className="mt-12 sm:mt-16 relative overflow-hidden rounded-3xl bg-ink p-6 sm:p-8 lg:p-12 shadow-xl border border-line">
           <Image
             src="/images/photos/red-mountains.jpg"
             alt="Banner backdrop"
             fill
+            sizes="100vw"
             className="object-cover opacity-25"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/90 to-transparent" />
@@ -780,7 +794,7 @@ export function VehiclesPageContent() {
               <span className="text-xs font-extrabold uppercase tracking-widest text-brand">
                 PLAN MORE, SPEND LESS.
               </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+              <h2 className="text-xl sm:text-3xl font-extrabold text-white">
                 Get Up to 20% Off on Weekly Bookings!
               </h2>
               <p className="text-xs sm:text-sm text-white/70">
@@ -798,7 +812,7 @@ export function VehiclesPageContent() {
                   setSelectedCategory("all");
                   window.scrollTo({ top: 400, behavior: "smooth" });
                 }}
-                className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-3.5 text-xs font-semibold text-white shadow-lg transition hover:bg-brand-dark"
+                className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-3.5 text-xs font-semibold text-white shadow-lg sm:transition sm:hover:bg-brand-dark"
               >
                 Book Now <ArrowRight className="size-4" />
               </button>
@@ -807,7 +821,7 @@ export function VehiclesPageContent() {
         </div>
 
         {/* --- TRUST FEATURES ROW --- */}
-        <div className="mt-12 grid grid-cols-2 md:grid-cols-5 gap-6 pt-6 border-t border-line text-center sm:text-left">
+        <div className="mt-12 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-6 pt-6 border-t border-line text-center sm:text-left">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="grid size-10 place-items-center rounded-full bg-brand/10 text-brand shrink-0">
               <ShieldCheck className="size-5" />
@@ -848,7 +862,7 @@ export function VehiclesPageContent() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-3 col-span-2 md:col-span-1">
+          <div className="flex flex-col sm:flex-row items-center gap-3 col-span-2 sm:col-span-1">
             <div className="grid size-10 place-items-center rounded-full bg-brand/10 text-brand shrink-0">
               <Star className="size-5 fill-brand text-brand" />
             </div>
@@ -862,72 +876,38 @@ export function VehiclesPageContent() {
 
       {/* --- MOBILE FILTER DRAWER SHEET --- */}
       {mobileFiltersOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 lg:hidden backdrop-blur-xs">
-          <div className="w-full max-w-xs bg-white h-full overflow-y-auto p-5 space-y-6 shadow-2xl flex flex-col justify-between">
-            <div className="space-y-6">
+        <div
+          className="fixed inset-0 z-50 flex justify-end bg-black/60 lg:hidden backdrop-blur-xs"
+          onClick={() => setMobileFiltersOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Filter vehicles"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm bg-white h-dvh shadow-2xl flex flex-col"
+          >
+            <div className="flex-1 overflow-y-auto overscroll-contain p-5 space-y-6">
               <div className="flex items-center justify-between border-b border-line pb-4">
                 <h3 className="font-bold text-ink text-base">Filter Vehicles</h3>
                 <button
                   onClick={() => setMobileFiltersOpen(false)}
+                  aria-label="Close filters"
                   className="rounded-full p-1 text-muted hover:bg-gray-100"
                 >
                   <X className="size-5" />
                 </button>
               </div>
 
-              {/* Mobile Filter Controls */}
-              <div className="space-y-5 text-xs">
-                <div>
-                  <h4 className="font-bold text-ink mb-2">Vehicle Type</h4>
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => setSelectedCategory("all")}
-                      className={`w-full text-left px-3 py-2 rounded-lg ${selectedCategory === "all" ? "bg-brand text-white font-bold" : "bg-gray-100"}`}
-                    >
-                      All Vehicles
-                    </button>
-                    <button
-                      onClick={() => setSelectedCategory("bike")}
-                      className={`w-full text-left px-3 py-2 rounded-lg ${selectedCategory === "bike" ? "bg-brand text-white font-bold" : "bg-gray-100"}`}
-                    >
-                      Bikes
-                    </button>
-                    <button
-                      onClick={() => setSelectedCategory("scooter")}
-                      className={`w-full text-left px-3 py-2 rounded-lg ${selectedCategory === "scooter" ? "bg-brand text-white font-bold" : "bg-gray-100"}`}
-                    >
-                      Scooters
-                    </button>
-                    <button
-                      onClick={() => setSelectedCategory("car")}
-                      className={`w-full text-left px-3 py-2 rounded-lg ${selectedCategory === "car" ? "bg-brand text-white font-bold" : "bg-gray-100"}`}
-                    >
-                      Cars
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-bold text-ink mb-2">Price Limit: ₹ {maxPrice.toLocaleString()}</h4>
-                  <input
-                    type="range"
-                    min="400"
-                    max="10000"
-                    step="100"
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(Number(e.target.value))}
-                    className="w-full accent-brand"
-                  />
-                </div>
-              </div>
+              {filterSections}
             </div>
 
-            <div className="pt-4 border-t border-line space-y-2">
+            <div className="p-5 pt-4 border-t border-line space-y-2">
               <button
                 onClick={() => setMobileFiltersOpen(false)}
                 className="w-full rounded-xl bg-brand py-3 text-xs font-semibold text-white shadow-md"
               >
-                Apply Filters
+                Show {filteredVehicles.length} Vehicles
               </button>
               <button
                 onClick={() => {
@@ -943,12 +923,7 @@ export function VehiclesPageContent() {
         </div>
       )}
 
-      {/* --- BOOKING MODAL --- */}
-      <BookingModal
-        vehicle={bookingVehicle}
-        onClose={() => setBookingVehicle(null)}
-        onSuccess={(msg) => showToast(msg)}
-      />
+
     </div>
   );
 }

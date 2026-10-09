@@ -80,25 +80,26 @@ export function AboutImpact() {
             <span>OUR IMPACT</span>
           </div>
 
-          <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-ink sm:text-3xl lg:text-4xl">
+          <h2 className="mt-3 text-[22px] font-extrabold leading-tight tracking-tight text-ink sm:text-3xl lg:text-4xl">
             Creating opportunities.<br className="hidden sm:inline" /> Moving lives forward.
           </h2>
         </div>
 
         {/* Impact Stats Row */}
-        <div className="mt-10 grid grid-cols-2 gap-4 rounded-2xl border border-line/80 bg-slate-50/50 p-6 sm:grid-cols-4 sm:p-8">
+        <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-6 rounded-2xl border border-line/80 bg-slate-50/50 p-5 sm:gap-y-4 sm:p-8 lg:grid-cols-4">
           {impactStats.map((stat) => {
             const IconComp = stat.icon;
             return (
-              <div key={stat.label} className="flex items-center gap-3.5">
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
+              // phones: icon above the text so labels get the full cell width; side by side from sm
+              <div key={stat.label} className="flex flex-col items-start gap-2.5 sm:flex-row sm:items-center sm:gap-3.5">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand sm:size-11">
                   <IconComp className="size-5" />
                 </div>
-                <div>
-                  <div className="text-xl font-extrabold text-ink sm:text-2xl">
+                <div className="min-w-0">
+                  <div className="text-xl font-extrabold leading-tight text-ink sm:text-2xl">
                     {stat.value}
                   </div>
-                  <div className="text-xs font-medium text-muted">
+                  <div className="mt-0.5 text-xs font-medium leading-snug text-muted">
                     {stat.label}
                   </div>
                 </div>
@@ -144,7 +145,10 @@ export function AboutImpact() {
             ].map((t, idx) => (
               <div
                 key={t.name + idx}
-                className="flex flex-col justify-between rounded-2xl border border-line bg-white p-6 shadow-sm transition hover:border-brand/30 hover:shadow-md"
+                className={`${
+                  // one card on phones (arrows/dots page through), three from md up
+                  idx > 0 ? "hidden md:flex" : "flex"
+                } flex-col justify-between rounded-2xl border border-line bg-white p-5 shadow-sm transition hover:border-brand/30 hover:shadow-md sm:p-6`}
               >
                 <div>
                   {/* Rating Stars */}
@@ -167,6 +171,7 @@ export function AboutImpact() {
                       src={t.avatar}
                       alt={t.name}
                       fill
+                      sizes="40px"
                       className="object-cover"
                     />
                   </div>

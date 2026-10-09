@@ -62,7 +62,7 @@ export function AboutWhyRypp() {
               <span>WHY RYPP?</span>
             </div>
 
-            <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-ink sm:text-3xl lg:text-4xl">
+            <h2 className="mt-3 text-[22px] font-extrabold leading-tight tracking-tight text-ink sm:text-3xl lg:text-4xl">
               More than just rentals —<br className="hidden sm:inline" /> a better way to move.
             </h2>
           </div>
@@ -108,7 +108,7 @@ export function AboutWhyRypp() {
                     <IconComponent className="size-5" />
                   </div>
 
-                  <h3 className="mt-4 text-base font-bold text-ink">
+                  <h3 className="mt-4 text-[15px] font-bold text-ink sm:text-base">
                     {feat.title}
                   </h3>
 

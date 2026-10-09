@@ -10,8 +10,8 @@ export function CtaBanner() {
       <Container className="relative">
         <div className="flex min-h-[200px] items-center justify-between gap-8 py-10">
           <div>
-            <h2 className="text-[26px] font-bold tracking-tight sm:text-[30px]">Ready for Your Next Journey?</h2>
-            <p className="mt-2 text-sm text-white/90">Choose your ride and experience freedom like never before.</p>
+            <h2 className="text-[22px] font-bold leading-tight tracking-tight sm:text-[30px]">Ready for Your Next Journey?</h2>
+            <p className="mt-2 text-[13px] text-white/90 sm:text-sm">Choose your ride and experience freedom like never before.</p>
             <RedButton href="#vehicles" className="mt-5">
               Book Your Ride
             </RedButton>

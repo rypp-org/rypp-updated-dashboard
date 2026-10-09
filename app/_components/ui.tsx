@@ -39,9 +39,9 @@ export function SectionHeading({
 }) {
   return (
     <div>
-      <h2 className="text-[28px] font-bold leading-tight tracking-tight text-ink sm:text-[34px]">{title}</h2>
+      <h2 className="text-[22px] font-bold leading-tight tracking-tight text-ink sm:text-[28px] lg:text-[34px]">{title}</h2>
       {underline && <span className="mt-2 block h-0.5 w-9 bg-brand" />}
-      {subtitle && <p className={`text-sm text-muted ${underline ? "mt-2" : "mt-1.5"}`}>{subtitle}</p>}
+      {subtitle && <p className={`text-[13px] text-muted sm:text-sm ${underline ? "mt-2" : "mt-1.5"}`}>{subtitle}</p>}
     </div>
   );
 }

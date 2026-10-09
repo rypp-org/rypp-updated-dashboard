@@ -19,7 +19,7 @@ export function Hero() {
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <Image src={images.hero} alt="" fill preload sizes="100vw" className="object-cover object-[62%_55%]" />
         {/* small screens: fade from the top */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-white/70 via-45% to-transparent md:hidden" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-white/80 via-50% to-transparent md:hidden" />
         {/* wider screens: solid white hugging the text column (max-w-[560px]), then a quick fade into the photo */}
         <div
           className="absolute inset-0 hidden md:block"
@@ -31,10 +31,10 @@ export function Hero() {
       </div>
 
       <Container className="relative">
-        <div className="flex flex-col justify-between gap-10 pb-56 pt-10 lg:min-h-[560px] lg:pb-8 lg:gap-0 lg:pt-12">
+        <div className="flex flex-col justify-between gap-8 pb-40 pt-8 sm:gap-10 sm:pb-56 sm:pt-10 lg:min-h-[560px] lg:pb-8 lg:gap-0 lg:pt-12">
           <div className="max-w-[560px]">
-            <p className="text-[13px] font-medium uppercase tracking-[0.2em] text-muted">Explore. Ride. Belong.</p>
-            <h1 className="mt-4 text-[38px] font-extrabold leading-[1.1] tracking-tight text-ink sm:text-[52px] lg:text-[58px]">
+            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted sm:text-[13px]">Explore. Ride. Belong.</p>
+            <h1 className="mt-3 text-[30px] font-extrabold leading-[1.12] tracking-tight text-ink min-[400px]:text-[34px] sm:mt-4 sm:text-[52px] sm:leading-[1.1] lg:text-[58px]">
               India&rsquo;s Next Gen
               <br />
               <span className="text-brand">
@@ -43,15 +43,15 @@ export function Hero() {
                 Platform
               </span>
             </h1>
-            <p className="mt-5 text-base leading-7 text-ink/80 sm:text-lg">
+            <p className="mt-4 text-[14px] leading-6 text-ink/80 sm:mt-5 sm:text-lg sm:leading-7">
               Bikes, Scooters and Cars for every journey.
               <br />
               Affordable. Flexible. Reliable.
             </p>
-            <div className="mt-7 flex flex-wrap items-center gap-6">
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-4 sm:mt-7 sm:gap-6">
               <RedButton href="#vehicles">Book Your Ride</RedButton>
-              <Link href="#how-it-works" className="group inline-flex items-center gap-3">
-                <span className="grid size-10 place-items-center rounded-full bg-brand text-white shadow-[0_8px_20px_-8px_rgba(228,32,44,0.8)] transition group-hover:bg-brand-dark">
+              <Link href="#how-it-works" className="group inline-flex items-center gap-2.5 sm:gap-3">
+                <span className="grid size-9 place-items-center rounded-full sm:size-10 bg-brand text-white shadow-[0_8px_20px_-8px_rgba(228,32,44,0.8)] transition group-hover:bg-brand-dark">
                   <Play className="size-4 fill-white" aria-hidden />
                 </span>
                 <span className="text-left text-xs font-semibold leading-tight text-ink">
@@ -62,11 +62,15 @@ export function Hero() {
             </div>
           </div>
 
-          <ul className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-4 md:max-w-[700px]">
+          {/* below md the badges sit over the photo, so give them a frosted card for legibility */}
+          <ul className="grid grid-cols-2 gap-x-3 gap-y-4 rounded-2xl bg-white/90 p-4 shadow-[0_12px_32px_-16px_rgba(11,17,25,0.45)] backdrop-blur-sm sm:gap-x-4 sm:gap-y-5 sm:p-5 md:max-w-[700px] md:grid-cols-4 md:rounded-none md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-none">
             {trust.map(({ icon: Icon, top, bottom }) => (
-              <li key={top} className="flex items-center gap-3">
-                <Icon className="h-[38px] shrink-0 text-brand" />
-                <span className="whitespace-nowrap text-[13px] leading-tight text-ink">
+              <li key={top} className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                {/* fixed square so the differently-proportioned traced glyphs render at one size */}
+                <span className="grid size-8 shrink-0 place-items-center sm:size-[38px]">
+                  <Icon className="h-full max-w-full text-brand" />
+                </span>
+                <span className="min-w-0 text-[11.5px] leading-tight text-ink sm:whitespace-nowrap sm:text-[13px]">
                   <span className="block font-medium">{top}</span>
                   <span className="block font-medium">{bottom}</span>
                 </span>
