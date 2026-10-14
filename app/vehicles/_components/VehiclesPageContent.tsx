@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -22,13 +22,17 @@ import {
   SlidersHorizontal,
   X,
   RotateCcw,
+  RefreshCw,
+  Activity,
 } from "lucide-react";
 import {
   ALL_VEHICLES,
   FuelType,
   TransmissionType,
   VehicleCategory,
+  type Vehicle,
 } from "../../_lib/vehiclesData";
+import { vehiclesApi } from "../../_lib/api/vehicles";
 import { Container } from "../../_components/ui";
 
 // Custom Scooter SVG Icon for header pills
@@ -54,6 +58,11 @@ function ScooterIcon({ className = "size-4" }: { className?: string }) {
 }
 
 export function VehiclesPageContent() {
+  // --- Live API States ---
+  const [apiVehicles, setApiVehicles] = useState<Vehicle[]>(ALL_VEHICLES);
+  const [isLoadingVehicles, setIsLoadingVehicles] = useState<boolean>(false);
+  const [isLiveApi, setIsLiveApi] = useState<boolean>(false);
+
   // --- Filtering & UI States ---
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<VehicleCategory>("all");
@@ -78,6 +87,28 @@ export function VehiclesPageContent() {
     transmission: true,
     brand: true,
   });
+
+  const fetchVehicles = useCallback(async () => {
+    setIsLoadingVehicles(true);
+    try {
+      const res = await vehiclesApi.getVehicles({
+        category: selectedCategory !== "all" ? selectedCategory : undefined,
+        search: searchQuery.trim() || undefined,
+        max_price: maxPrice,
+        sort_by: sortBy,
+      });
+      setApiVehicles(res.vehicles);
+      setIsLiveApi(res.isLiveApi);
+    } catch (err) {
+      console.error("Failed to load vehicles from API:", err);
+    } finally {
+      setIsLoadingVehicles(false);
+    }
+  }, [selectedCategory, searchQuery, maxPrice, sortBy]);
+
+  useEffect(() => {
+    fetchVehicles();
+  }, [fetchVehicles]);
 
   const toggleAccordion = (key: keyof typeof openAccordion) => {
     setOpenAccordion((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -115,7 +146,7 @@ export function VehiclesPageContent() {
 
   // --- Dynamic Filtering Logic ---
   const filteredVehicles = useMemo(() => {
-    return ALL_VEHICLES.filter((item) => {
+    return apiVehicles.filter((item) => {
       // Category filter (Category pill tabs or sidebar)
       if (selectedCategory !== "all" && item.category !== selectedCategory) {
         return false;
@@ -151,6 +182,7 @@ export function VehiclesPageContent() {
       return 0; // "recommended" keeps original curated order
     });
   }, [
+    apiVehicles,
     searchQuery,
     selectedCategory,
     maxPrice,
@@ -170,11 +202,11 @@ export function VehiclesPageContent() {
 
   // Dynamic Brand List based on current search filter inside brand accordion
   const allBrands = useMemo(() => {
-    const brandsSet = Array.from(new Set(ALL_VEHICLES.map((v) => v.brand)));
+    const brandsSet = Array.from(new Set(apiVehicles.map((v) => v.brand)));
     return brandsSet.filter((b) =>
       b.toLowerCase().includes(brandSearch.toLowerCase().trim())
     );
-  }, [brandSearch]);
+  }, [apiVehicles, brandSearch]);
 
   // Shared by the desktop sidebar and the mobile drawer so both expose the same filters
   const filterSections = (
@@ -636,8 +668,60 @@ export function VehiclesPageContent() {
           </aside>
 
           {/* ================= VEHICLE CARDS GRID ================= */}
-          <main className="space-y-8">
-            {currentItems.length > 0 ? (
+          <main className="space-y-6">
+            {/* API Status Header */}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-line/20 px-4 py-2.5">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                    isLiveApi
+                      ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border border-amber-200 bg-amber-50 text-amber-700"
+                  }`}
+                >
+                  <span
+                    className={`size-2 rounded-full ${
+                      isLiveApi ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
+                    }`}
+                  />
+                  {isLiveApi
+                    ? "Live API Connected (GET /api/v1/vehicles)"
+                    : "RYPP Fleet (Local Cache)"}
+                </span>
+                <span className="text-xs text-muted">
+                  Showing {filteredVehicles.length} vehicles
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => fetchVehicles()}
+                disabled={isLoadingVehicles}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:text-brand-dark transition disabled:opacity-50"
+              >
+                <RefreshCw
+                  className={`size-3.5 ${
+                    isLoadingVehicles ? "animate-spin text-brand" : ""
+                  }`}
+                />
+                Refresh from API
+              </button>
+            </div>
+
+            {isLoadingVehicles ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <div
+                    key={n}
+                    className="animate-pulse rounded-2xl border border-line bg-white p-4 space-y-4"
+                  >
+                    <div className="aspect-[16/10] w-full rounded-xl bg-gray-200" />
+                    <div className="h-4 w-3/4 rounded bg-gray-200" />
+                    <div className="h-3 w-1/2 rounded bg-gray-200" />
+                    <div className="h-8 w-full rounded-xl bg-gray-200" />
+                  </div>
+                ))}
+              </div>
+            ) : currentItems.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {currentItems.map((vehicle) => {
                   const isWishlisted = wishlist.includes(vehicle.id);

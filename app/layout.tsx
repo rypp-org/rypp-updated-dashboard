@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Kaushan_Script, Poppins } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "./_context/AuthContext";
+import { AuthModal } from "./_components/AuthModal";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -20,10 +22,16 @@ export const metadata: Metadata = {
     "Rent bikes, scooters and cars for every journey. Affordable, flexible and reliable vehicle rentals across India.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${poppins.variable} ${kaushan.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AuthProvider>
+          {children}
+          <AuthModal />
+        </AuthProvider>
+      </body>
     </html>
   );
 }
+

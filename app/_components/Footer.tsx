@@ -134,9 +134,18 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="flex flex-col justify-between gap-1 py-4 text-[11px] text-white/60 sm:flex-row sm:gap-2 sm:py-5">
+        <div className="flex flex-col justify-between items-center gap-2 py-4 text-[11px] text-white/60 sm:flex-row sm:py-5 border-t border-white/10">
           <p>&copy; 2026 RYPP. All Rights Reserved.</p>
-          <p>Ride Your Way. Explore More.</p>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/api-tester"
+              className="inline-flex items-center gap-1.5 text-brand hover:underline font-medium"
+            >
+              <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              API Integration Console (5 Endpoints)
+            </Link>
+            <p>Ride Your Way. Explore More.</p>
+          </div>
         </div>
       </Container>
     </footer>

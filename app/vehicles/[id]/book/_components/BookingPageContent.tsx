@@ -38,6 +38,8 @@ import {
 } from "lucide-react";
 import { Container } from "../../../../_components/ui";
 import { SERVICE_FEE, TIME_SLOTS, type VehicleDetail } from "../../../../_lib/vehiclesData";
+import { useAuth } from "../../../../_context/AuthContext";
+import { vehiclesApi } from "../../../../_lib/api/vehicles";
 
 // ---------------------------------------------------------------------------
 // Types, constants & helpers
@@ -356,11 +358,48 @@ export function BookingPageContent({
   const [trip, setTrip] = useState<Trip>(initialTrip);
   const updateTrip = (patch: Partial<Trip>) => setTrip((t) => ({ ...t, ...patch }));
 
+  const { user } = useAuth();
+
   // renter
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
   const [city, setCity] = useState("Bengaluru");
+
+  // Auto-prefill renter details if user is logged in
+  useEffect(() => {
+    if (user) {
+      if (user.name) setName((prev) => prev || user.name);
+      if (user.email) setEmail((prev) => prev || user.email);
+      if (user.phone) setMobile((prev) => prev || user.phone);
+    }
+  }, [user]);
+
+  // Live Vehicle Availability Check (API 8)
+  const [isAvailable, setIsAvailable] = useState(true);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    setCheckingAvailability(true);
+    vehiclesApi
+      .checkAvailability(vehicle.id, trip.pickupDate, trip.returnDate)
+      .then((res) => {
+        if (isMounted) {
+          setIsAvailable(res.available);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setIsAvailable(true);
+      })
+      .finally(() => {
+        if (isMounted) setCheckingAvailability(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [vehicle.id, trip.pickupDate, trip.returnDate]);
 
   // documents
   const [idType, setIdType] = useState(ID_TYPES[0]);
@@ -933,6 +972,18 @@ export function BookingPageContent({
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
                   <CircleCheck className="size-3.5" aria-hidden /> Verified Vehicle
+                </span>
+              </div>
+
+              {/* Live Availability Status */}
+              <div className="mt-2.5 flex items-center gap-2 rounded-lg border border-line bg-line/20 px-3 py-1.5 text-[11px] font-medium text-ink">
+                <span className={`size-2 rounded-full ${isAvailable ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
+                <span>
+                  {checkingAvailability
+                    ? "Checking dates availability via API..."
+                    : isAvailable
+                    ? "Vehicle Available for Selected Dates"
+                    : "Limited availability for selected dates"}
                 </span>
               </div>
 

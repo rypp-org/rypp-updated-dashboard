@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Star } from "lucide-react";
-import { vehicles, type VehicleCategory } from "../_lib/data";
+import { vehicles as fallbackVehicles, type VehicleCategory } from "../_lib/data";
+import { vehiclesApi } from "../_lib/api/vehicles";
+import type { Vehicle } from "../_lib/vehiclesData";
 import { Container, ViewAll } from "./ui";
 
 type Tab = "bike" | "scooter" | "car";
@@ -26,7 +28,23 @@ const inr = new Intl.NumberFormat("en-IN");
 export function PopularVehicles() {
   // null = the mixed "featured" lineup shown on first load
   const [tab, setTab] = useState<VehicleCategory | null>(null);
-  const shown = tab ? vehicles.filter((v) => v.category === tab) : vehicles.filter((v) => v.featured);
+  const [vehicleList, setVehicleList] = useState<Vehicle[]>(fallbackVehicles);
+
+  useEffect(() => {
+    let isMounted = true;
+    vehiclesApi.getVehicles({ featured: true }).then((res) => {
+      if (isMounted && res.vehicles && res.vehicles.length > 0) {
+        setVehicleList(res.vehicles);
+      }
+    }).catch(() => {
+      // keep fallback
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const shown = tab ? vehicleList.filter((v) => v.category === tab) : vehicleList.filter((v) => v.featured);
   const activeTab = tab ?? "bike";
 
   return (

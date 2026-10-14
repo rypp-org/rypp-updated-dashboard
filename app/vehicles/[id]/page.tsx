@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { Header } from "../../_components/Header";
 import { Footer } from "../../_components/Footer";
-import { ALL_VEHICLES, defaultTripDates, getVehicleDetails } from "../../_lib/vehiclesData";
+import { defaultTripDates, getVehicleDetails } from "../../_lib/vehiclesData";
+import { vehiclesApi } from "../../_lib/api/vehicles";
 import { VehicleDetailPageContent } from "./_components/VehicleDetailPageContent";
 
 interface PageProps {
@@ -11,7 +11,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const vehicle = getVehicleDetails(id);
+  const { vehicle } = await vehiclesApi.getVehicleById(id);
   if (!vehicle) return { title: "Vehicle Not Found | RYPP" };
 
   return {
@@ -22,29 +22,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function VehicleDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const baseVehicle = ALL_VEHICLES.find((v) => v.id === id);
+  const { vehicle } = await vehiclesApi.getVehicleById(id);
 
-  if (!baseVehicle) {
-    // Fallback to default vehicle or notFound if completely unrecognized
-    const vehicle = getVehicleDetails("re-himalayan");
-    return (
-      <>
-        <Header />
-        <main className="flex-1">
-          <VehicleDetailPageContent vehicle={vehicle} dates={defaultTripDates()} />
-        </main>
-        <Footer />
-      </>
-    );
-  }
-
-  const vehicleDetails = getVehicleDetails(id);
+  // Fallback to Himalayan if vehicle is not found
+  const finalVehicle = vehicle || getVehicleDetails("re-himalayan");
 
   return (
     <>
       <Header />
       <main className="flex-1">
-        <VehicleDetailPageContent vehicle={vehicleDetails} dates={defaultTripDates()} />
+        <VehicleDetailPageContent vehicle={finalVehicle} dates={defaultTripDates()} />
       </main>
       <Footer />
     </>
