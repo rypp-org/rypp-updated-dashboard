@@ -4,9 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, Star } from "lucide-react";
-import { vehicles as fallbackVehicles, type VehicleCategory } from "../_lib/data";
 import { vehiclesApi } from "../_lib/api/vehicles";
-import type { Vehicle } from "../_lib/vehiclesData";
+import { ALL_VEHICLES as fallbackVehicles, type Vehicle } from "../_lib/vehiclesData";
 import { Container, ViewAll } from "./ui";
 
 type Tab = "bike" | "scooter" | "car";
@@ -17,7 +16,7 @@ const tabs: { id: Tab; label: string }[] = [
   { id: "car", label: "Cars" },
 ];
 
-const categoryBadge: Record<VehicleCategory, string> = {
+const categoryBadge: Record<Tab, string> = {
   bike: "Bike",
   scooter: "Scooter",
   car: "Car",
@@ -27,7 +26,7 @@ const inr = new Intl.NumberFormat("en-IN");
 
 export function PopularVehicles() {
   // null = the mixed "featured" lineup shown on first load
-  const [tab, setTab] = useState<VehicleCategory | null>(null);
+  const [tab, setTab] = useState<Tab | null>(null);
   const [vehicleList, setVehicleList] = useState<Vehicle[]>(fallbackVehicles);
 
   useEffect(() => {

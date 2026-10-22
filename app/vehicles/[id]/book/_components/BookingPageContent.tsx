@@ -371,7 +371,10 @@ export function BookingPageContent({
     if (user) {
       if (user.name) setName((prev) => prev || user.name);
       if (user.email) setEmail((prev) => prev || user.email);
-      if (user.phone) setMobile((prev) => prev || user.phone);
+      if (user.phone) {
+        const phone = user.phone;
+        setMobile((prev) => prev || phone);
+      }
     }
   }, [user]);
 
@@ -383,7 +386,7 @@ export function BookingPageContent({
     let isMounted = true;
     setCheckingAvailability(true);
     vehiclesApi
-      .checkAvailability(vehicle.id, trip.pickupDate, trip.returnDate)
+      .checkAvailability(vehicle.id, trip.pickupDate, trip.dropDate)
       .then((res) => {
         if (isMounted) {
           setIsAvailable(res.available);
@@ -399,7 +402,7 @@ export function BookingPageContent({
     return () => {
       isMounted = false;
     };
-  }, [vehicle.id, trip.pickupDate, trip.returnDate]);
+  }, [vehicle.id, trip.pickupDate, trip.dropDate]);
 
   // documents
   const [idType, setIdType] = useState(ID_TYPES[0]);

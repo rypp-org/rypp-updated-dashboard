@@ -23,6 +23,7 @@ import {
   Lock,
   Smartphone,
   User,
+  Activity,
 } from "lucide-react";
 import { Header } from "../_components/Header";
 import { Footer } from "../_components/Footer";
@@ -202,6 +203,22 @@ export default function ApiTesterPage() {
       "GET"
     );
 
+  const [auditRunning, setAuditRunning] = useState(false);
+  const [auditReport, setAuditReport] = useState<any>(null);
+
+  const runBackendAudit = async () => {
+    setAuditRunning(true);
+    try {
+      const res = await fetch("/api/test-suite");
+      const data = await res.json();
+      setAuditReport(data);
+    } catch (err: any) {
+      setAuditReport({ error: err.message || "Failed to run audit" });
+    } finally {
+      setAuditRunning(false);
+    }
+  };
+
   const runAllTests = async () => {
     setBatchRunning(true);
     const tests = [
@@ -259,6 +276,25 @@ export default function ApiTesterPage() {
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
+              onClick={runBackendAudit}
+              disabled={auditRunning}
+              className="inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-xs font-bold text-ink shadow-sm hover:border-brand/40 hover:bg-slate-50 transition disabled:opacity-50"
+            >
+              {auditRunning ? (
+                <>
+                  <Loader2 className="size-4 animate-spin text-brand" />
+                  Auditing Backend...
+                </>
+              ) : (
+                <>
+                  <Activity className="size-4 text-brand" />
+                  Run Live Backend Audit
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
               onClick={runAllTests}
               disabled={batchRunning}
               className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand-dark transition disabled:opacity-50"
@@ -271,7 +307,7 @@ export default function ApiTesterPage() {
               ) : (
                 <>
                   <Sparkles className="size-4 fill-current" />
-                  Run Core Test Suite
+                  Run Core Client Tests
                 </>
               )}
             </button>
@@ -297,6 +333,76 @@ export default function ApiTesterPage() {
             )}
           </div>
         </div>
+
+        {/* Live Backend Audit Results Panel */}
+        {auditReport && (
+          <div className="mt-6 rounded-2xl border border-line bg-white p-5 sm:p-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+              <div>
+                <h3 className="text-base font-bold text-ink flex items-center gap-2">
+                  <Activity className="size-5 text-brand" />
+                  Live Backend Health & Connectivity Audit
+                </h3>
+                <p className="text-xs text-muted mt-0.5">
+                  Audited Host: <code className="font-mono font-bold text-ink">{auditReport.targetHost || "https://api.rypp.in"}</code> | {auditReport.timestamp}
+                </p>
+              </div>
+              {auditReport.summary && (
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-700">
+                    {auditReport.summary.reachableEndpoints} / {auditReport.summary.totalEndpointsTested} Endpoints Reachable
+                  </span>
+                  {auditReport.summary.openApiRegisteredRoutesCount > 0 && (
+                    <span className="rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-bold text-blue-700">
+                      {auditReport.summary.openApiRegisteredRoutesCount} Routes Found in Spec
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {auditReport.results && (
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-line text-muted font-semibold">
+                      <th className="pb-2">Method</th>
+                      <th className="pb-2">Endpoint</th>
+                      <th className="pb-2">Status</th>
+                      <th className="pb-2">Latency</th>
+                      <th className="pb-2">Details</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line/60 font-mono text-[11px]">
+                    {Object.entries(auditReport.results).map(([key, item]: [string, any]) => (
+                      <tr key={key} className="hover:bg-slate-50/50">
+                        <td className="py-2.5 font-bold">{item.method}</td>
+                        <td className="py-2.5">{item.path}</td>
+                        <td className="py-2.5">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded px-2 py-0.5 font-bold ${
+                              item.status >= 200 && item.status < 300
+                                ? "bg-emerald-100 text-emerald-800"
+                                : item.status >= 400 && item.status < 500
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {item.status ? `${item.status} ${item.statusText || ""}` : "Unreachable"}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-muted">{item.latencyMs}ms</td>
+                        <td className="py-2.5 font-sans text-muted truncate max-w-xs">
+                          {item.error || (item.data?.preview ? item.data.preview.slice(0, 50) : JSON.stringify(item.data)?.slice(0, 60))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Stats Strip */}
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
