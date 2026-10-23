@@ -19,25 +19,34 @@ import type {
   UserProfile,
 } from "../_lib/api/types";
 
-export type AuthModalMode = "login" | "register" | "forgot" | "otp";
+export type AuthModalMode = "login" | "register" | "forgot" | "otp" | "verify";
+
+export interface PendingVerificationData {
+  email?: string;
+  phone?: string;
+  password?: string;
+  name?: string;
+}
 
 interface AuthContextType {
   user: UserProfile | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  pendingVerification: PendingVerificationData | null;
+  setPendingVerification: (data: PendingVerificationData | null) => void;
   login: (credentials: LoginCredentials) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
+  register: (data: RegisterData) => Promise<{ requiresVerification: boolean; message?: string }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   updateProfile: (data: UpdateProfileRequest) => Promise<UserProfile>;
   forgotPassword: (email: string) => Promise<GenericMessageResponse>;
   resetPassword: (data: ResetPasswordRequest) => Promise<GenericMessageResponse>;
   changePassword: (data: ChangePasswordRequest) => Promise<GenericMessageResponse>;
-  sendOtp: (phone: string) => Promise<GenericMessageResponse>;
-  verifyOtp: (phone: string, otp: string) => Promise<void>;
+  sendOtp: (target: string | { phone?: string; email?: string }, type?: "email" | "phone") => Promise<GenericMessageResponse>;
+  verifyOtp: (target: string | { phone?: string; email?: string; otp: string }, otpParam?: string) => Promise<void>;
   authModalOpen: boolean;
-  openAuthModal: (mode?: AuthModalMode) => void;
+  openAuthModal: (mode?: AuthModalMode, initialData?: PendingVerificationData) => void;
   closeAuthModal: () => void;
   authModalMode: AuthModalMode;
   setAuthModalMode: (mode: AuthModalMode) => void;
@@ -51,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<AuthModalMode>("login");
+  const [pendingVerification, setPendingVerification] = useState<PendingVerificationData | null>(null);
 
   const refreshUser = useCallback(async () => {
     const existingToken = getStoredToken();
@@ -83,7 +93,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const res = await authApi.login(credentials);
-      setToken(res.access_token);
+      if (res.access_token) {
+        setToken(res.access_token);
+      }
       if (res.user) {
         setUser(res.user);
       } else {
@@ -98,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         }
       }
+      setPendingVerification(null);
       setAuthModalOpen(false);
     } finally {
       setIsLoading(false);
@@ -107,49 +120,115 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: RegisterData) => {
     setIsLoading(true);
     try {
+      setPendingVerification({
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
+        name: data.name,
+      });
+
       const res = await authApi.register(data);
-      setToken(res.access_token);
-      if (res.user) {
-        setUser(res.user);
-      } else {
-        try {
-          const profile = await authApi.getMe();
-          setUser(profile);
-        } catch {
-          setUser({
-            id: "user-new",
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-          });
+
+      // If backend issued token directly without requiring OTP
+      if (res.access_token && !res.requires_verification) {
+        setToken(res.access_token);
+        if (res.user) {
+          setUser(res.user);
+        } else {
+          try {
+            const profile = await authApi.getMe();
+            setUser(profile);
+          } catch {
+            setUser({
+              id: "user-new",
+              name: data.name,
+              email: data.email,
+              phone: data.phone,
+            });
+          }
         }
+        setAuthModalOpen(false);
+        return { requiresVerification: false, message: "Account created and logged in!" };
       }
-      setAuthModalOpen(false);
+
+      // Backend requires OTP verification (sent to Gmail / phone)
+      setAuthModalMode("verify");
+      return {
+        requiresVerification: true,
+        message: res.message || res.detail || `Verification OTP sent to ${data.email}${data.phone ? ` & ${data.phone}` : ""}`,
+      };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const verifyOtp = async (phone: string, otp: string) => {
+  const verifyOtp = async (
+    target: string | { phone?: string; email?: string; otp: string },
+    otpParam?: string
+  ) => {
     setIsLoading(true);
     try {
-      const res = await authApi.verifyOtp(phone, otp);
-      setToken(res.access_token);
-      if (res.user) {
-        setUser(res.user);
+      let email = pendingVerification?.email;
+      let phone = pendingVerification?.phone;
+      let otp = "";
+
+      if (typeof target === "string") {
+        otp = otpParam || "";
+        if (target.includes("@")) {
+          email = target;
+        } else {
+          phone = target;
+        }
       } else {
+        otp = target.otp;
+        email = target.email || email;
+        phone = target.phone || phone;
+      }
+
+      const res = await authApi.verifyOtp({ email, phone, otp });
+
+      let activeToken = res.access_token;
+
+      // If the backend didn't return a token upon verification, but we have saved password from registration, automatically login
+      if (!activeToken && email && pendingVerification?.password) {
+        try {
+          const loginRes = await authApi.login({
+            email,
+            password: pendingVerification.password,
+          });
+          activeToken = loginRes.access_token;
+          if (loginRes.user) {
+            setUser(loginRes.user);
+          }
+        } catch {
+          // Ignore fallback login error
+        }
+      }
+
+      if (activeToken) {
+        setToken(activeToken);
         try {
           const profile = await authApi.getMe();
           setUser(profile);
         } catch {
           setUser({
-            id: `user-${phone.slice(-4)}`,
-            name: `User ${phone.slice(-4)}`,
-            email: `${phone.replace(/\D/g, "")}@rypp.in`,
+            id: email ? `user-${email.split("@")[0]}` : `user-${phone?.slice(-4)}`,
+            name: pendingVerification?.name || email?.split("@")[0] || "Verified User",
+            email: email || `${phone?.replace(/\D/g, "")}@rypp.in`,
             phone,
           });
         }
+      } else {
+        // Fallback user state
+        setUser({
+          id: "user-verified",
+          name: pendingVerification?.name || email?.split("@")[0] || "Verified User",
+          email: email || `${phone?.replace(/\D/g, "")}@rypp.in`,
+          phone,
+        });
       }
+
+      setPendingVerification(null);
       setAuthModalOpen(false);
     } finally {
       setIsLoading(false);
@@ -174,18 +253,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return authApi.changePassword(data);
   };
 
-  const sendOtp = async (phone: string) => {
-    return authApi.sendOtp(phone);
+  const sendOtp = async (
+    target: string | { phone?: string; email?: string },
+    type?: "email" | "phone"
+  ) => {
+    return authApi.sendOtp(target, type);
   };
 
   const logout = () => {
     authApi.logoutServer();
     setUser(null);
     setToken(null);
+    setPendingVerification(null);
   };
 
-  const openAuthModal = (mode: AuthModalMode = "login") => {
+  const openAuthModal = (mode: AuthModalMode = "login", initialData?: PendingVerificationData) => {
     setAuthModalMode(mode);
+    if (initialData) {
+      setPendingVerification(initialData);
+    }
     setAuthModalOpen(true);
   };
 
@@ -200,6 +286,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         isAuthenticated: Boolean(token && user),
         isLoading,
+        pendingVerification,
+        setPendingVerification,
         login,
         register,
         logout,

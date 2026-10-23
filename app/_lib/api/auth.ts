@@ -126,31 +126,47 @@ export const authApi = {
       "auth/signup",
     ];
 
+    const payloadVariants = [
+      { name: data.name, email: data.email, password: data.password, phone: data.phone },
+      { full_name: data.name, email: data.email, password: data.password, mobile: data.phone },
+      { name: data.name, username: data.email, email: data.email, password: data.password, phone: data.phone },
+      { email: data.email, password: data.password, phone: data.phone },
+    ];
+
     let lastError: any = null;
 
     for (const path of candidatePaths) {
-      try {
-        const res = await apiClient<AuthResponse>(path, {
-          method: "POST",
-          body: JSON.stringify(data),
-        });
+      for (const payload of payloadVariants) {
+        try {
+          const res = await apiClient<AuthResponse>(path, {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
 
-        if (res && (res.access_token || (res as any).token)) {
-          const token = res.access_token || (res as any).token;
-          setStoredToken(token);
-          if (res.refresh_token) {
-            setStoredRefreshToken(res.refresh_token);
+          if (res) {
+            const token = res.access_token || (res as any).token || (res as any).data?.access_token;
+            if (token) {
+              setStoredToken(token);
+              if (res.refresh_token) {
+                setStoredRefreshToken(res.refresh_token);
+              }
+              return {
+                ...res,
+                access_token: token,
+              };
+            }
+            return {
+              ...res,
+              requires_verification: true,
+              email: data.email,
+              phone: data.phone,
+            };
           }
-          return {
-            ...res,
-            access_token: token,
-          };
-        }
-        return res;
-      } catch (err: any) {
-        lastError = err;
-        if (err.status !== 404 && err.status !== 0) {
-          throw err;
+        } catch (err: any) {
+          lastError = err;
+          if (err.status !== 404 && err.status !== 422 && err.status !== 405 && err.status !== 0) {
+            throw err;
+          }
         }
       }
     }
@@ -387,78 +403,216 @@ export const authApi = {
   },
 
   /**
-   * API 10: Send Mobile OTP
+   * API 10: Send OTP to Mobile Number or Email (Gmail, etc.)
    * Endpoint: POST /api/v1/auth/send-otp
    */
-  async sendOtp(phone: string): Promise<GenericMessageResponse> {
-    const candidatePaths = [
-      "api/v1/auth/send-otp",
-      "auth/send-otp",
-      "api/v1/auth/otp/send",
-      "auth/otp/send",
-    ];
+  async sendOtp(
+    target: string | { phone?: string; email?: string; identifier?: string; type?: "email" | "phone" | "mobile" },
+    typeOverride?: "email" | "phone" | "mobile"
+  ): Promise<GenericMessageResponse> {
+    let email: string | undefined;
+    let phone: string | undefined;
+    let identifier: string | undefined;
+
+    if (typeof target === "string") {
+      if (target.includes("@")) {
+        email = target.trim();
+        identifier = email;
+      } else {
+        phone = target.trim();
+        identifier = phone;
+      }
+    } else {
+      email = target.email?.trim();
+      phone = target.phone?.trim();
+      identifier = target.identifier?.trim() || email || phone;
+    }
+
+    const isEmail = typeOverride === "email" || (Boolean(email) && !phone) || (identifier ? identifier.includes("@") : false);
+
+    const candidatePaths = isEmail
+      ? [
+          "api/v1/auth/send-otp",
+          "auth/send-otp",
+          "api/v1/auth/send-email-otp",
+          "auth/send-email-otp",
+          "api/v1/auth/otp/send",
+          "auth/otp/send",
+          "api/v1/auth/resend-otp",
+          "auth/resend-otp",
+        ]
+      : [
+          "api/v1/auth/send-otp",
+          "auth/send-otp",
+          "api/v1/auth/otp/send",
+          "auth/otp/send",
+          "api/v1/auth/resend-otp",
+          "auth/resend-otp",
+        ];
+
+    // Payload variations to ensure compatibility with any FastAPI schema
+    const payloadVariants: Record<string, any>[] = isEmail
+      ? [
+          { email: identifier || email },
+          { identifier: identifier || email, type: "email" },
+          { email: identifier || email, channel: "email" },
+          { username: identifier || email },
+        ]
+      : [
+          { phone: identifier || phone },
+          { mobile: identifier || phone },
+          { phone_number: identifier || phone },
+          { identifier: identifier || phone, type: "mobile" },
+          { phone: identifier || phone, channel: "sms" },
+        ];
 
     let lastError: any = null;
 
     for (const path of candidatePaths) {
-      try {
-        return await apiClient<GenericMessageResponse>(path, {
-          method: "POST",
-          body: JSON.stringify({ phone }),
-        });
-      } catch (err: any) {
-        lastError = err;
-        if (err.status !== 404 && err.status !== 0) {
-          throw err;
+      for (const payload of payloadVariants) {
+        try {
+          const res = await apiClient<GenericMessageResponse>(path, {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+          if (res) {
+            return {
+              message: res.message || `Verification OTP sent to ${identifier || (isEmail ? "your email" : "your phone")}`,
+              success: true,
+            };
+          }
+        } catch (err: any) {
+          lastError = err;
+          // If status is 422 (validation error on field name) or 404 (endpoint not found), try next variant
+          if (err.status !== 404 && err.status !== 422 && err.status !== 405 && err.status !== 0) {
+            throw err;
+          }
         }
       }
     }
 
-    throw lastError || new ApiError("Failed to send OTP", 500);
+    throw lastError || new ApiError(`Failed to send OTP to ${identifier || "recipient"}`, 500);
   },
 
   /**
-   * API 11: Verify Mobile OTP & Authenticate
+   * API 11: Verify OTP (Email or Mobile) & Authenticate
    * Endpoint: POST /api/v1/auth/verify-otp
    */
-  async verifyOtp(phone: string, otp: string): Promise<AuthResponse> {
-    const candidatePaths = [
-      "api/v1/auth/verify-otp",
-      "auth/verify-otp",
-      "api/v1/auth/otp/verify",
-      "auth/otp/verify",
-    ];
+  async verifyOtp(
+    target: string | { phone?: string; email?: string; identifier?: string; otp: string },
+    otpParam?: string
+  ): Promise<AuthResponse> {
+    let email: string | undefined;
+    let phone: string | undefined;
+    let identifier: string | undefined;
+    let otp = "";
+
+    if (typeof target === "string") {
+      otp = (otpParam || "").trim();
+      if (target.includes("@")) {
+        email = target.trim();
+        identifier = email;
+      } else {
+        phone = target.trim();
+        identifier = phone;
+      }
+    } else {
+      otp = (target.otp || "").trim();
+      email = target.email?.trim();
+      phone = target.phone?.trim();
+      identifier = target.identifier?.trim() || email || phone;
+    }
+
+    const isEmail = (Boolean(email) && !phone) || (identifier ? identifier.includes("@") : false);
+
+    const candidatePaths = isEmail
+      ? [
+          "api/v1/auth/verify-otp",
+          "auth/verify-otp",
+          "api/v1/auth/verify-email",
+          "auth/verify-email",
+          "api/v1/auth/verify-email-otp",
+          "auth/verify-email-otp",
+          "api/v1/auth/email/verify",
+          "auth/email/verify",
+          "api/v1/auth/otp/verify",
+          "auth/otp/verify",
+          "api/v1/auth/verify",
+          "auth/verify",
+        ]
+      : [
+          "api/v1/auth/verify-otp",
+          "auth/verify-otp",
+          "api/v1/auth/verify-phone",
+          "auth/verify-phone",
+          "api/v1/auth/otp/verify",
+          "auth/otp/verify",
+          "api/v1/auth/verify",
+          "auth/verify",
+        ];
+
+    // Payload variations for email or phone OTP verification schemas
+    const payloadVariants: Record<string, any>[] = isEmail
+      ? [
+          { email: identifier || email, otp },
+          { email: identifier || email, code: otp },
+          { email: identifier || email, otp_code: otp },
+          { identifier: identifier || email, otp },
+          { token: otp, email: identifier || email },
+          { otp, email: identifier || email },
+        ]
+      : [
+          { phone: identifier || phone, otp },
+          { mobile: identifier || phone, otp },
+          { phone_number: identifier || phone, otp },
+          { phone: identifier || phone, code: otp },
+          { identifier: identifier || phone, otp },
+          { otp, phone: identifier || phone },
+        ];
+
+    // If both email and phone are known, also try composite payloads
+    if (email && phone) {
+      payloadVariants.unshift(
+        { email, phone, otp },
+        { email, otp },
+        { phone, otp }
+      );
+    }
 
     let lastError: any = null;
 
     for (const path of candidatePaths) {
-      try {
-        const res = await apiClient<AuthResponse>(path, {
-          method: "POST",
-          body: JSON.stringify({ phone, otp }),
-        });
+      for (const payload of payloadVariants) {
+        try {
+          const res = await apiClient<AuthResponse>(path, {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
 
-        if (res && (res.access_token || (res as any).token)) {
-          const token = res.access_token || (res as any).token;
-          setStoredToken(token);
-          if (res.refresh_token) {
-            setStoredRefreshToken(res.refresh_token);
+          if (res) {
+            const token = res.access_token || (res as any).token || (res as any).data?.access_token;
+            if (token) {
+              setStoredToken(token);
+              if (res.refresh_token) {
+                setStoredRefreshToken(res.refresh_token);
+              }
+              return {
+                ...res,
+                access_token: token,
+              };
+            }
+            return res;
           }
-          return {
-            ...res,
-            access_token: token,
-          };
-        }
-        return res;
-      } catch (err: any) {
-        lastError = err;
-        if (err.status !== 404 && err.status !== 0) {
-          throw err;
+        } catch (err: any) {
+          lastError = err;
+          if (err.status !== 404 && err.status !== 422 && err.status !== 405 && err.status !== 0) {
+            throw err;
+          }
         }
       }
     }
 
-    throw lastError || new ApiError("Failed to verify OTP", 500);
+    throw lastError || new ApiError("Failed to verify OTP code. Please check the code and try again.", 400);
   },
 
   /**

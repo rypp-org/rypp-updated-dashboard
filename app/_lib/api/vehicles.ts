@@ -1,19 +1,14 @@
-// Vehicles API Service for RYPP Backend (All Endpoints)
-// 1. GET    /api/v1/vehicles
-// 2. GET    /api/v1/vehicles/{id}
-// 3. POST   /api/v1/vehicles (Create new vehicle)
-// 4. PUT    /api/v1/vehicles/{id} (Update vehicle)
-// 5. DELETE /api/v1/vehicles/{id} (Delete vehicle)
-// 6. GET    /api/v1/vehicles/categories (List categories)
-// 7. GET    /api/v1/vehicles/featured (Featured vehicles)
-// 8. GET    /api/v1/vehicles/{id}/availability (Check availability)
+// Vehicles API Service for RYPP Backend (Consumer Endpoints)
+// 1. GET /api/v1/vehicles
+// 2. GET /api/v1/vehicles/{id}
+// 3. GET /api/v1/vehicles/categories (List categories)
+// 4. GET /api/v1/vehicles/featured (Featured vehicles)
+// 5. GET /api/v1/vehicles/{id}/availability (Check availability)
 
 import { apiClient, ApiError } from "./client";
 import type {
   ApiVehicle,
-  CreateVehicleInput,
   GenericMessageResponse,
-  UpdateVehicleInput,
   VehicleAvailabilityResponse,
   VehicleCategoryItem,
   VehicleListResponse,
@@ -31,11 +26,14 @@ import { ALL_VEHICLES, getVehicleDetails } from "../vehiclesData";
 /**
  * Normalizes an API vehicle into the frontend Vehicle interface.
  */
-export function adaptApiVehicleToUi(apiVehicle: ApiVehicle): Vehicle {
-  const category = (apiVehicle.category || "bike").toLowerCase() as "bike" | "scooter" | "car";
-  const validCategory = ["bike", "scooter", "car"].includes(category)
-    ? category
-    : "bike";
+export function adaptApiVehicleToUi(apiVehicle: any): Vehicle {
+  const rawCat = (
+    apiVehicle.category ||
+    apiVehicle.vehicle_type ||
+    apiVehicle.type ||
+    apiVehicle.class ||
+    ""
+  ).toLowerCase();
 
   const rawFuel = apiVehicle.fuel_type || apiVehicle.fuelType || "Petrol";
   const fuelType: FuelType =
@@ -49,24 +47,120 @@ export function adaptApiVehicleToUi(apiVehicle: ApiVehicle): Vehicle {
   const transmission: TransmissionType =
     rawTrans.toLowerCase() === "automatic" ? "Automatic" : "Manual";
 
-  const defaultImage =
-    validCategory === "car"
-      ? "/images/photos/v-thar.jpg"
-      : validCategory === "scooter"
-      ? "/images/photos/v-activa.jpg"
-      : "/images/photos/v-himalayan.jpg";
+  const price = apiVehicle.price_per_day ?? apiVehicle.pricePerDay ?? 699;
+
+  let validCategory: "bike" | "scooter" | "car" = "bike";
+  if (
+    rawCat.includes("car") ||
+    rawCat.includes("four") ||
+    rawCat.includes("suv") ||
+    rawCat.includes("sedan") ||
+    price >= 2000 ||
+    fuelType === "Diesel"
+  ) {
+    validCategory = "car";
+  } else if (
+    rawCat.includes("scoot") ||
+    rawCat.includes("moped") ||
+    rawCat.includes("activa") ||
+    (transmission === "Automatic" && price <= 650)
+  ) {
+    validCategory = "scooter";
+  }
+
+  // Name resolution
+  let resolvedName =
+    apiVehicle.name ||
+    apiVehicle.model ||
+    apiVehicle.vehicle_name ||
+    apiVehicle.vehicle_model ||
+    apiVehicle.title;
+
+  if (!resolvedName || resolvedName === "Unnamed Vehicle") {
+    const knownMatch = ALL_VEHICLES.find(
+      (v) =>
+        v.id === String(apiVehicle.id) ||
+        (v.category === validCategory && Math.abs(v.pricePerDay - price) < 150)
+    );
+    if (knownMatch) {
+      resolvedName = knownMatch.name;
+    } else if (validCategory === "car") {
+      resolvedName = "Mahindra Thar 4x4";
+    } else if (validCategory === "scooter") {
+      resolvedName = fuelType === "Electric" ? "Ola S1 Pro Gen 2" : "Honda Activa 6G";
+    } else {
+      resolvedName = "Royal Enfield Himalayan 450";
+    }
+  }
+
+  // Brand resolution
+  let resolvedBrand = apiVehicle.brand || apiVehicle.make || apiVehicle.company;
+  if (!resolvedBrand || resolvedBrand === "RYPP Fleet") {
+    const n = resolvedName.toLowerCase();
+    if (n.includes("himalayan") || n.includes("royal") || n.includes("classic") || n.includes("bullet")) {
+      resolvedBrand = "Royal Enfield";
+    } else if (n.includes("thar") || n.includes("scorpio") || n.includes("xuv") || n.includes("mahindra")) {
+      resolvedBrand = "Mahindra";
+    } else if (n.includes("activa") || n.includes("dio") || n.includes("honda")) {
+      resolvedBrand = "Honda";
+    } else if (n.includes("ola")) {
+      resolvedBrand = "Ola Electric";
+    } else if (n.includes("ktm") || n.includes("duke")) {
+      resolvedBrand = "KTM";
+    } else if (n.includes("tvs") || n.includes("jupiter")) {
+      resolvedBrand = "TVS";
+    } else if (validCategory === "car") {
+      resolvedBrand = "Mahindra";
+    } else {
+      resolvedBrand = "Royal Enfield";
+    }
+  }
+
+  // Image resolution
+  let image =
+    apiVehicle.image_url ||
+    apiVehicle.image ||
+    apiVehicle.photo ||
+    apiVehicle.thumbnail ||
+    (Array.isArray(apiVehicle.images) && apiVehicle.images[0]) ||
+    (Array.isArray(apiVehicle.gallery) && apiVehicle.gallery[0]);
+
+  if (!image) {
+    const knownByName = ALL_VEHICLES.find(
+      (v) => v.name.toLowerCase() === resolvedName.toLowerCase()
+    );
+    if (knownByName) {
+      image = knownByName.image;
+    } else if (validCategory === "car") {
+      image = "/images/photos/v-thar.jpg";
+    } else if (validCategory === "scooter") {
+      image = fuelType === "Electric" ? "/images/photos/v-activa.jpg" : "/images/photos/v-jupiter.jpg";
+    } else {
+      image = "/images/photos/v-himalayan.jpg";
+    }
+  }
+
+  const rating =
+    typeof apiVehicle.rating === "number" && apiVehicle.rating > 0
+      ? apiVehicle.rating
+      : 4.8;
+
+  const reviews =
+    typeof apiVehicle.reviews === "number" && apiVehicle.reviews > 0
+      ? apiVehicle.reviews
+      : 120;
 
   return {
     id: String(apiVehicle.id),
-    name: apiVehicle.name || "Unnamed Vehicle",
+    name: resolvedName,
     category: validCategory,
-    brand: apiVehicle.brand || "RYPP Fleet",
-    rating: typeof apiVehicle.rating === "number" ? apiVehicle.rating : 4.8,
-    reviews: typeof apiVehicle.reviews === "number" ? apiVehicle.reviews : 120,
-    pricePerDay: apiVehicle.price_per_day ?? apiVehicle.pricePerDay ?? 699,
+    brand: resolvedBrand,
+    rating,
+    reviews,
+    pricePerDay: price,
     fuelType,
     transmission,
-    image: apiVehicle.image_url || apiVehicle.image || defaultImage,
+    image,
     featured: Boolean(apiVehicle.featured),
   };
 }
@@ -129,7 +223,7 @@ export const vehiclesApi = {
         max_price: params?.max_price,
         featured: params?.featured,
         page: params?.page ?? 1,
-        limit: params?.limit ?? 20,
+        limit: params?.limit ?? 50,
         sort_by: params?.sort_by,
       };
 
@@ -151,58 +245,61 @@ export const vehiclesApi = {
       }
 
       if (response) {
+        console.log("%c[RYPP API] Raw Vehicles Response (/api/v1/vehicles):", "color: #e4202c; font-weight: bold; font-size: 13px;", response);
+
         const rawList = Array.isArray(response)
           ? response
           : (response.items || response.data || response.results || response.vehicles || []);
 
-        if (Array.isArray(rawList) && rawList.length > 0) {
-          return {
-            vehicles: rawList.map(adaptApiVehicleToUi),
-            total: Array.isArray(response) ? rawList.length : (response.total ?? response.count ?? rawList.length),
-            isLiveApi: true,
-          };
+        console.log("%c[RYPP API] Total DB Records in Database:", "color: #10b981; font-weight: bold; font-size: 13px;", rawList.length, rawList);
+
+        const apiAdapted = Array.isArray(rawList) ? rawList.map(adaptApiVehicleToUi) : [];
+        console.log("%c[RYPP API] Adapted DB Vehicles for UI:", "color: #3b82f6; font-weight: bold; font-size: 13px;", apiAdapted);
+
+        let filtered = apiAdapted;
+        if (params?.category && params.category !== "all") {
+          filtered = filtered.filter((v) => v.category === params.category);
+        }
+        if (params?.search) {
+          const q = params.search.toLowerCase();
+          filtered = filtered.filter(
+            (v) =>
+              v.name.toLowerCase().includes(q) ||
+              v.brand.toLowerCase().includes(q)
+          );
+        }
+        if (params?.max_price) {
+          filtered = filtered.filter((v) => v.pricePerDay <= (params.max_price as number));
+        }
+        if (params?.featured) {
+          filtered = filtered.filter((v) => v.featured);
         }
 
         return {
-          vehicles: [],
-          total: 0,
+          vehicles: filtered,
+          total: filtered.length,
           isLiveApi: true,
         };
       }
 
-      throw new Error("Vehicles endpoint not found");
-    } catch (err) {
-      console.warn("Live API /api/v1/vehicles unavailable, using local fleet data:", err);
-
-      let filtered = [...ALL_VEHICLES];
-      if (params?.category && params.category !== "all") {
-        filtered = filtered.filter((v) => v.category === params.category);
-      }
-      if (params?.search) {
-        const q = params.search.toLowerCase();
-        filtered = filtered.filter(
-          (v) =>
-            v.name.toLowerCase().includes(q) ||
-            v.brand.toLowerCase().includes(q)
-        );
-      }
-      if (params?.max_price) {
-        filtered = filtered.filter((v) => v.pricePerDay <= (params.max_price as number));
-      }
-      if (params?.featured) {
-        filtered = filtered.filter((v) => v.featured);
-      }
-
+      console.warn("[RYPP API] No vehicle data returned by server /api/v1/vehicles");
       return {
-        vehicles: filtered,
-        total: filtered.length,
+        vehicles: [],
+        total: 0,
+        isLiveApi: true,
+      };
+    } catch (err) {
+      console.error("[RYPP API] Failed to fetch vehicles from database:", err);
+      return {
+        vehicles: [],
+        total: 0,
         isLiveApi: false,
       };
     }
   },
 
   /**
-   * API: Get vehicle details by ID
+   * API: Get vehicle details by ID (Strict DB Query)
    * Endpoint: GET /api/v1/vehicles/{id}
    */
   async getVehicleById(
@@ -219,125 +316,29 @@ export const vehiclesApi = {
           method: "GET",
         });
 
+        console.log(`%c[RYPP API] Raw Vehicle Detail for ${id}:`, "color: #e4202c; font-weight: bold;", response);
+
         const raw = response && response.data ? response.data : response;
 
-        if (raw && (raw.name || raw.id)) {
+        if (raw && (raw.name || raw.id || raw.model || raw.title)) {
+          const adapted = adaptApiVehicleToDetail(raw);
+          console.log(`[RYPP API] Adapted Vehicle Detail for ${id}:`, adapted);
           return {
-            vehicle: adaptApiVehicleToDetail(raw),
+            vehicle: adapted,
             isLiveApi: true,
           };
         }
       } catch (err: any) {
         if (err.status !== 404 && err.status !== 0) {
-          console.warn(`Live API ${path} error:`, err);
+          console.error(`[RYPP API] Error fetching vehicle ${id} from DB:`, err);
         }
       }
     }
 
-    const local = getVehicleDetails(id);
     return {
-      vehicle: local,
+      vehicle: null,
       isLiveApi: false,
     };
-  },
-
-  /**
-   * API: Create a new vehicle in fleet
-   * Endpoint: POST /api/v1/vehicles
-   */
-  async createVehicle(data: CreateVehicleInput): Promise<Vehicle> {
-    const candidatePaths = ["api/v1/vehicles", "vehicles"];
-    let lastError: any = null;
-
-    for (const path of candidatePaths) {
-      try {
-        const response = await apiClient<any>(path, {
-          method: "POST",
-          body: JSON.stringify(data),
-        });
-        const raw = response && response.data ? response.data : response;
-        return adaptApiVehicleToUi(raw);
-      } catch (err: any) {
-        lastError = err;
-        if (err.status !== 404 && err.status !== 0) {
-          throw err;
-        }
-      }
-    }
-
-    throw lastError || new ApiError("Failed to create vehicle", 500);
-  },
-
-  /**
-   * API: Update vehicle details
-   * Endpoint: PUT /api/v1/vehicles/{id} or PATCH /api/v1/vehicles/{id}
-   */
-  async updateVehicle(id: string, data: UpdateVehicleInput): Promise<Vehicle> {
-    const candidatePaths = [
-      `api/v1/vehicles/${encodeURIComponent(id)}`,
-      `vehicles/${encodeURIComponent(id)}`,
-    ];
-    let lastError: any = null;
-
-    for (const path of candidatePaths) {
-      try {
-        const response = await apiClient<any>(path, {
-          method: "PUT",
-          body: JSON.stringify(data),
-        });
-        const raw = response && response.data ? response.data : response;
-        return adaptApiVehicleToUi(raw);
-      } catch (err: any) {
-        if (err.status === 405) {
-          // If PUT not supported, try PATCH
-          try {
-            const patchRes = await apiClient<any>(path, {
-              method: "PATCH",
-              body: JSON.stringify(data),
-            });
-            const raw = patchRes && patchRes.data ? patchRes.data : patchRes;
-            return adaptApiVehicleToUi(raw);
-          } catch (patchErr) {
-            lastError = patchErr;
-          }
-        } else {
-          lastError = err;
-        }
-
-        if (err.status !== 404 && err.status !== 0) {
-          throw err;
-        }
-      }
-    }
-
-    throw lastError || new ApiError(`Failed to update vehicle ${id}`, 500);
-  },
-
-  /**
-   * API: Delete vehicle from fleet
-   * Endpoint: DELETE /api/v1/vehicles/{id}
-   */
-  async deleteVehicle(id: string): Promise<GenericMessageResponse> {
-    const candidatePaths = [
-      `api/v1/vehicles/${encodeURIComponent(id)}`,
-      `vehicles/${encodeURIComponent(id)}`,
-    ];
-    let lastError: any = null;
-
-    for (const path of candidatePaths) {
-      try {
-        return await apiClient<GenericMessageResponse>(path, {
-          method: "DELETE",
-        });
-      } catch (err: any) {
-        lastError = err;
-        if (err.status !== 404 && err.status !== 0) {
-          throw err;
-        }
-      }
-    }
-
-    throw lastError || new ApiError(`Failed to delete vehicle ${id}`, 500);
   },
 
   /**

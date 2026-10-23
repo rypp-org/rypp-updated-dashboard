@@ -73,16 +73,6 @@ export default function ApiTesterPage() {
   const [testVehicleCategory, setTestVehicleCategory] = useState("all");
   const [testVehicleId, setTestVehicleId] = useState("re-himalayan");
 
-  const [newVehicleName, setNewVehicleName] = useState("Ola S1 Pro Gen 2");
-  const [newVehicleBrand, setNewVehicleBrand] = useState("Ola Electric");
-  const [newVehicleCategory, setNewVehicleCategory] = useState<"bike" | "scooter" | "car">("scooter");
-  const [newVehiclePrice, setNewVehiclePrice] = useState(599);
-
-  const [updateVehicleId, setUpdateVehicleId] = useState("re-himalayan");
-  const [updatePrice, setUpdatePrice] = useState(849);
-
-  const [deleteVehicleId, setDeleteVehicleId] = useState("temp-vehicle-id");
-
   const [availStartDate, setAvailStartDate] = useState("2026-10-15");
   const [availEndDate, setAvailEndDate] = useState("2026-10-18");
 
@@ -162,33 +152,6 @@ export default function ApiTesterPage() {
   const testGetVehicleById = () =>
     runTest("vehicles_detail", () => vehiclesApi.getVehicleById(testVehicleId), `/api/v1/vehicles/${testVehicleId}`, "GET");
 
-  const testCreateVehicle = () =>
-    runTest(
-      "vehicles_create",
-      () =>
-        vehiclesApi.createVehicle({
-          name: newVehicleName,
-          brand: newVehicleBrand,
-          category: newVehicleCategory,
-          price_per_day: newVehiclePrice,
-          fuel_type: "Electric",
-          transmission: "Automatic",
-        }),
-      "/api/v1/vehicles",
-      "POST"
-    );
-
-  const testUpdateVehicle = () =>
-    runTest(
-      "vehicles_update",
-      () => vehiclesApi.updateVehicle(updateVehicleId, { price_per_day: updatePrice }),
-      `/api/v1/vehicles/${updateVehicleId}`,
-      "PUT"
-    );
-
-  const testDeleteVehicle = () =>
-    runTest("vehicles_delete", () => vehiclesApi.deleteVehicle(deleteVehicleId), `/api/v1/vehicles/${deleteVehicleId}`, "DELETE");
-
   const testGetCategories = () =>
     runTest("vehicles_categories", () => vehiclesApi.getCategories(), "/api/v1/vehicles/categories", "GET");
 
@@ -233,7 +196,6 @@ export default function ApiTesterPage() {
       testGetCategories,
       testGetFeatured,
       testCheckAvailability,
-      testCreateVehicle,
     ];
     for (const t of tests) {
       try {
@@ -717,18 +679,19 @@ export default function ApiTesterPage() {
               {/* 10. Send OTP */}
               <ApiCard
                 num="A10"
-                title="Send Mobile OTP"
+                title="Send OTP (Gmail / Mobile)"
                 method="POST"
                 endpoint="/api/v1/auth/send-otp"
-                desc="Dispatches a 6-digit SMS verification code to mobile."
+                desc="Dispatches a 6-digit verification code to Gmail/email or mobile number."
                 loading={Boolean(loadingMap["auth_send_otp"])}
                 result={results["auth_send_otp"]}
                 onRun={testSendOtp}
                 inputs={
                   <div className="mt-3 max-w-sm">
-                    <label className="text-[11px] font-semibold text-muted block mb-1">Mobile Number</label>
+                    <label className="text-[11px] font-semibold text-muted block mb-1">Email (Gmail) or Mobile Number</label>
                     <input
                       type="text"
+                      placeholder="e.g. user@gmail.com or +91 98765 43210"
                       value={otpPhone}
                       onChange={(e) => setOtpPhone(e.target.value)}
                       className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none"
@@ -740,19 +703,20 @@ export default function ApiTesterPage() {
               {/* 11. Verify OTP */}
               <ApiCard
                 num="A11"
-                title="Verify OTP & Login"
+                title="Verify OTP & Authenticate (Gmail / Mobile)"
                 method="POST"
                 endpoint="/api/v1/auth/verify-otp"
-                desc="Verifies mobile OTP and creates authenticated session."
+                desc="Verifies email or mobile OTP and creates authenticated session."
                 loading={Boolean(loadingMap["auth_verify_otp"])}
                 result={results["auth_verify_otp"]}
                 onRun={testVerifyOtp}
                 inputs={
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                     <div>
-                      <label className="text-[11px] font-semibold text-muted block mb-1">Mobile Number</label>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Email (Gmail) or Mobile</label>
                       <input
                         type="text"
+                        placeholder="e.g. user@gmail.com or +91 98765 43210"
                         value={otpPhone}
                         onChange={(e) => setOtpPhone(e.target.value)}
                         className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none"
@@ -834,121 +798,9 @@ export default function ApiTesterPage() {
                 }
               />
 
-              {/* 14. Create Vehicle */}
+              {/* Vehicle Categories */}
               <ApiCard
                 num="V3"
-                title="Create Vehicle in Fleet"
-                method="POST"
-                endpoint="/api/v1/vehicles"
-                desc="Adds a new vehicle to the rental fleet inventory."
-                loading={Boolean(loadingMap["vehicles_create"])}
-                result={results["vehicles_create"]}
-                onRun={testCreateVehicle}
-                inputs={
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
-                    <div>
-                      <label className="text-[11px] font-semibold text-muted block mb-1">Vehicle Name</label>
-                      <input
-                        type="text"
-                        value={newVehicleName}
-                        onChange={(e) => setNewVehicleName(e.target.value)}
-                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-semibold text-muted block mb-1">Brand</label>
-                      <input
-                        type="text"
-                        value={newVehicleBrand}
-                        onChange={(e) => setNewVehicleBrand(e.target.value)}
-                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-semibold text-muted block mb-1">Category</label>
-                      <select
-                        value={newVehicleCategory}
-                        onChange={(e) => setNewVehicleCategory(e.target.value as any)}
-                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
-                      >
-                        <option value="scooter">Scooter</option>
-                        <option value="bike">Bike</option>
-                        <option value="car">Car</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-semibold text-muted block mb-1">Price / Day (₹)</label>
-                      <input
-                        type="number"
-                        value={newVehiclePrice}
-                        onChange={(e) => setNewVehiclePrice(Number(e.target.value))}
-                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                }
-              />
-
-              {/* 15. Update Vehicle */}
-              <ApiCard
-                num="V4"
-                title="Update Vehicle"
-                method="PUT"
-                endpoint="/api/v1/vehicles/{id}"
-                desc="Modifies pricing or vehicle details."
-                loading={Boolean(loadingMap["vehicles_update"])}
-                result={results["vehicles_update"]}
-                onRun={testUpdateVehicle}
-                inputs={
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                    <div>
-                      <label className="text-[11px] font-semibold text-muted block mb-1">Vehicle ID to Update</label>
-                      <input
-                        type="text"
-                        value={updateVehicleId}
-                        onChange={(e) => setUpdateVehicleId(e.target.value)}
-                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-semibold text-muted block mb-1">Updated Price / Day (₹)</label>
-                      <input
-                        type="number"
-                        value={updatePrice}
-                        onChange={(e) => setUpdatePrice(Number(e.target.value))}
-                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                }
-              />
-
-              {/* 16. Delete Vehicle */}
-              <ApiCard
-                num="V5"
-                title="Delete Vehicle"
-                method="DELETE"
-                endpoint="/api/v1/vehicles/{id}"
-                desc="Removes a vehicle from active fleet."
-                loading={Boolean(loadingMap["vehicles_delete"])}
-                result={results["vehicles_delete"]}
-                onRun={testDeleteVehicle}
-                inputs={
-                  <div className="mt-3 max-w-sm">
-                    <label className="text-[11px] font-semibold text-muted block mb-1">Vehicle ID to Delete</label>
-                    <input
-                      type="text"
-                      value={deleteVehicleId}
-                      onChange={(e) => setDeleteVehicleId(e.target.value)}
-                      className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none"
-                    />
-                  </div>
-                }
-              />
-
-              {/* 17. Categories */}
-              <ApiCard
-                num="V6"
                 title="Vehicle Categories"
                 method="GET"
                 endpoint="/api/v1/vehicles/categories"
@@ -958,9 +810,9 @@ export default function ApiTesterPage() {
                 onRun={testGetCategories}
               />
 
-              {/* 18. Featured Vehicles */}
+              {/* Featured Vehicles */}
               <ApiCard
-                num="V7"
+                num="V4"
                 title="Featured Vehicles"
                 method="GET"
                 endpoint="/api/v1/vehicles/featured"
@@ -970,9 +822,9 @@ export default function ApiTesterPage() {
                 onRun={testGetFeatured}
               />
 
-              {/* 19. Check Availability */}
+              {/* Check Availability */}
               <ApiCard
-                num="V8"
+                num="V5"
                 title="Check Vehicle Availability"
                 method="GET"
                 endpoint="/api/v1/vehicles/{id}/availability"

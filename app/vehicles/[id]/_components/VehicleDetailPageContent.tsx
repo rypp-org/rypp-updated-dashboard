@@ -29,10 +29,10 @@ import {
   ChevronUp,
 } from "lucide-react";
 import {
-  ALL_VEHICLES,
   FAQ_LIST,
   TIME_SLOTS,
   VehicleDetail,
+  type Vehicle,
 } from "../../../_lib/vehiclesData";
 import { Container } from "../../../_components/ui";
 
@@ -40,9 +40,10 @@ interface VehicleDetailPageContentProps {
   vehicle: VehicleDetail;
   /** today / tomorrow / day-after, computed on the server so the date inputs hydrate consistently */
   dates: { today: string; pickup: string; drop: string };
+  similarVehicles?: Vehicle[];
 }
 
-export function VehicleDetailPageContent({ vehicle, dates }: VehicleDetailPageContentProps) {
+export function VehicleDetailPageContent({ vehicle, dates, similarVehicles = [] }: VehicleDetailPageContentProps) {
   // Gallery state
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -60,11 +61,6 @@ export function VehicleDetailPageContent({ vehicle, dates }: VehicleDetailPageCo
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
   };
-
-  // Similar vehicles (filter same category or fallback to curated list)
-  const similarVehicles = ALL_VEHICLES.filter(
-    (v) => v.category === vehicle.category && v.id !== vehicle.id
-  ).slice(0, 6);
 
   const prevImage = () => {
     setActiveImageIndex((prev) =>

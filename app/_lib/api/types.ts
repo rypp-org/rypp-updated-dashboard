@@ -24,11 +24,16 @@ export interface RegisterData {
 }
 
 export interface AuthResponse {
-  access_token: string;
+  access_token?: string;
   token_type?: string;
   refresh_token?: string;
   user?: UserProfile;
   message?: string;
+  detail?: string;
+  status?: string;
+  requires_verification?: boolean;
+  email?: string;
+  phone?: string;
 }
 
 export interface RefreshTokenRequest {
@@ -52,11 +57,16 @@ export interface ChangePasswordRequest {
 }
 
 export interface SendOtpRequest {
-  phone: string;
+  phone?: string;
+  email?: string;
+  identifier?: string;
+  type?: "email" | "phone" | "mobile";
 }
 
 export interface VerifyOtpRequest {
-  phone: string;
+  phone?: string;
+  email?: string;
+  identifier?: string;
   otp: string;
 }
 
@@ -112,27 +122,6 @@ export interface ApiVehicle {
   location?: string;
 }
 
-export interface CreateVehicleInput {
-  name: string;
-  brand: string;
-  category: "bike" | "scooter" | "car" | string;
-  price_per_day: number;
-  fuel_type?: "Petrol" | "Diesel" | "Electric" | string;
-  transmission?: "Manual" | "Automatic" | string;
-  image_url?: string;
-  description?: string;
-  featured?: boolean;
-  status?: "available" | "booked" | "maintenance" | string;
-  rating?: number;
-  reviews?: number;
-}
-
-export interface UpdateVehicleInput extends Partial<CreateVehicleInput> {
-  gallery?: string[];
-  engine_capacity?: string;
-  mileage?: string;
-  seating_capacity?: string;
-}
 
 export interface VehicleQueryParams {
   category?: string;

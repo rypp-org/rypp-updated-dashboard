@@ -3,11 +3,10 @@ import { notFound } from "next/navigation";
 import { Header } from "../../../_components/Header";
 import { Footer } from "../../../_components/Footer";
 import {
-  ALL_VEHICLES,
   TIME_SLOTS,
   defaultTripDates,
-  getVehicleDetails,
 } from "../../../_lib/vehiclesData";
+import { vehiclesApi } from "../../../_lib/api/vehicles";
 import { BookingPageContent } from "./_components/BookingPageContent";
 
 interface PageProps {
@@ -24,7 +23,7 @@ function pick(value: string | string[] | undefined, valid: (v: string) => boolea
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const vehicle = ALL_VEHICLES.find((v) => v.id === id);
+  const { vehicle } = await vehiclesApi.getVehicleById(id);
   if (!vehicle) return { title: "Vehicle Not Found | RYPP" };
 
   return {
@@ -35,7 +34,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function BookVehiclePage({ params, searchParams }: PageProps) {
   const { id } = await params;
-  if (!ALL_VEHICLES.some((v) => v.id === id)) notFound();
+  const { vehicle } = await vehiclesApi.getVehicleById(id);
+  if (!vehicle) notFound();
 
   const query = await searchParams;
   const defaults = defaultTripDates();
@@ -48,7 +48,7 @@ export default async function BookVehiclePage({ params, searchParams }: PageProp
       <Header />
       <main className="flex-1">
         <BookingPageContent
-          vehicle={getVehicleDetails(id)}
+          vehicle={vehicle}
           today={defaults.today}
           initialTrip={{
             pickupDate: pick(query.pickup, isFutureDate, defaults.pickup),

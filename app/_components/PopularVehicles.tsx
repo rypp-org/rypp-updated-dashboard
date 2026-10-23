@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, Star } from "lucide-react";
 import { vehiclesApi } from "../_lib/api/vehicles";
-import { ALL_VEHICLES as fallbackVehicles, type Vehicle } from "../_lib/vehiclesData";
+import type { Vehicle } from "../_lib/vehiclesData";
 import { Container, ViewAll } from "./ui";
 
 type Tab = "bike" | "scooter" | "car";
@@ -25,25 +25,30 @@ const categoryBadge: Record<Tab, string> = {
 const inr = new Intl.NumberFormat("en-IN");
 
 export function PopularVehicles() {
-  // null = the mixed "featured" lineup shown on first load
+  // null = the mixed lineup shown on first load
   const [tab, setTab] = useState<Tab | null>(null);
-  const [vehicleList, setVehicleList] = useState<Vehicle[]>(fallbackVehicles);
+  const [vehicleList, setVehicleList] = useState<Vehicle[]>([]);
 
   useEffect(() => {
     let isMounted = true;
-    vehiclesApi.getVehicles({ featured: true }).then((res) => {
-      if (isMounted && res.vehicles && res.vehicles.length > 0) {
+    vehiclesApi.getVehicles().then((res) => {
+      if (isMounted) {
+        console.log("%c[PopularVehicles] Loaded DB Vehicles:", "color: #10b981; font-weight: bold;", res.vehicles);
         setVehicleList(res.vehicles);
       }
-    }).catch(() => {
-      // keep fallback
+    }).catch((err) => {
+      console.error("[PopularVehicles] Failed to fetch vehicles from DB:", err);
     });
     return () => {
       isMounted = false;
     };
   }, []);
 
-  const shown = tab ? vehicleList.filter((v) => v.category === tab) : vehicleList.filter((v) => v.featured);
+  const shown = tab
+    ? vehicleList.filter((v) => v.category === tab)
+    : vehicleList.some((v) => v.featured)
+    ? vehicleList.filter((v) => v.featured)
+    : vehicleList;
   const activeTab = tab ?? "bike";
 
   return (

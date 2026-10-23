@@ -26,7 +26,6 @@ import {
   Activity,
 } from "lucide-react";
 import {
-  ALL_VEHICLES,
   FuelType,
   TransmissionType,
   VehicleCategory,
@@ -59,8 +58,8 @@ function ScooterIcon({ className = "size-4" }: { className?: string }) {
 
 export function VehiclesPageContent() {
   // --- Live API States ---
-  const [apiVehicles, setApiVehicles] = useState<Vehicle[]>(ALL_VEHICLES);
-  const [isLoadingVehicles, setIsLoadingVehicles] = useState<boolean>(false);
+  const [apiVehicles, setApiVehicles] = useState<Vehicle[]>([]);
+  const [isLoadingVehicles, setIsLoadingVehicles] = useState<boolean>(true);
   const [isLiveApi, setIsLiveApi] = useState<boolean>(false);
 
   // --- Filtering & UI States ---
@@ -97,10 +96,11 @@ export function VehiclesPageContent() {
         max_price: maxPrice,
         sort_by: sortBy,
       });
+      console.log("%c[VehiclesPage] Loaded DB Vehicles from API:", "color: #10b981; font-weight: bold; font-size: 13px;", res.vehicles);
       setApiVehicles(res.vehicles);
       setIsLiveApi(res.isLiveApi);
     } catch (err) {
-      console.error("Failed to load vehicles from API:", err);
+      console.error("[VehiclesPage] Failed to load vehicles from API:", err);
     } finally {
       setIsLoadingVehicles(false);
     }
@@ -208,6 +208,22 @@ export function VehiclesPageContent() {
     );
   }, [apiVehicles, brandSearch]);
 
+  // Dynamic Counts based on active fleet from DB
+  const vehicleCounts = useMemo(() => {
+    const dataset = apiVehicles;
+    return {
+      all: dataset.length,
+      bike: dataset.filter((v) => v.category === "bike").length,
+      scooter: dataset.filter((v) => v.category === "scooter").length,
+      car: dataset.filter((v) => v.category === "car").length,
+      petrol: dataset.filter((v) => v.fuelType === "Petrol").length,
+      diesel: dataset.filter((v) => v.fuelType === "Diesel").length,
+      electric: dataset.filter((v) => v.fuelType === "Electric").length,
+      manual: dataset.filter((v) => v.transmission === "Manual").length,
+      automatic: dataset.filter((v) => v.transmission === "Automatic").length,
+    };
+  }, [apiVehicles]);
+
   // Shared by the desktop sidebar and the mobile drawer so both expose the same filters
   const filterSections = (
     <>
@@ -236,7 +252,7 @@ export function VehiclesPageContent() {
                 }}
                 className="accent-brand size-4 rounded"
               />
-              <span>All Vehicles ({ALL_VEHICLES.length})</span>
+              <span>All Vehicles ({vehicleCounts.all})</span>
             </label>
 
             <label className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
@@ -249,7 +265,7 @@ export function VehiclesPageContent() {
                 }}
                 className="accent-brand size-4 rounded"
               />
-              <span>Bikes ({ALL_VEHICLES.filter((v) => v.category === "bike").length})</span>
+              <span>Bikes ({vehicleCounts.bike})</span>
             </label>
 
             <label className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
@@ -262,7 +278,7 @@ export function VehiclesPageContent() {
                 }}
                 className="accent-brand size-4 rounded"
               />
-              <span>Scooters ({ALL_VEHICLES.filter((v) => v.category === "scooter").length})</span>
+              <span>Scooters ({vehicleCounts.scooter})</span>
             </label>
 
             <label className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
@@ -275,7 +291,7 @@ export function VehiclesPageContent() {
                 }}
                 className="accent-brand size-4 rounded"
               />
-              <span>Cars ({ALL_VEHICLES.filter((v) => v.category === "car").length})</span>
+              <span>Cars ({vehicleCounts.car})</span>
             </label>
           </div>
         )}
@@ -332,7 +348,12 @@ export function VehiclesPageContent() {
         {openAccordion.fuelType && (
           <div className="mt-3.5 space-y-2.5 text-xs">
             {(["Petrol", "Diesel", "Electric"] as FuelType[]).map((fuel) => {
-              const count = ALL_VEHICLES.filter((v) => v.fuelType === fuel).length;
+              const count =
+                fuel === "Petrol"
+                  ? vehicleCounts.petrol
+                  : fuel === "Diesel"
+                  ? vehicleCounts.diesel
+                  : vehicleCounts.electric;
               const isChecked = selectedFuel.includes(fuel);
               return (
                 <label key={fuel} className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
@@ -371,7 +392,8 @@ export function VehiclesPageContent() {
         {openAccordion.transmission && (
           <div className="mt-3.5 space-y-2.5 text-xs">
             {(["Manual", "Automatic"] as TransmissionType[]).map((trans) => {
-              const count = ALL_VEHICLES.filter((v) => v.transmission === trans).length;
+              const count =
+                trans === "Manual" ? vehicleCounts.manual : vehicleCounts.automatic;
               const isChecked = selectedTransmission.includes(trans);
               return (
                 <label key={trans} className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
@@ -423,7 +445,7 @@ export function VehiclesPageContent() {
 
             <div className="max-h-44 overflow-y-auto space-y-2 text-xs pr-1 scrollbar-thin">
               {allBrands.map((b) => {
-                const count = ALL_VEHICLES.filter((v) => v.brand === b).length;
+                const count = apiVehicles.filter((v) => v.brand === b).length;
                 const isChecked = selectedBrands.includes(b);
                 return (
                   <label key={b} className="flex items-center gap-2.5 cursor-pointer hover:text-brand font-medium text-ink/80">
@@ -559,7 +581,7 @@ export function VehiclesPageContent() {
                 }`}
               >
                 <LayoutGrid className="size-4" />
-                All Vehicles ({ALL_VEHICLES.length})
+                All Vehicles ({vehicleCounts.all})
               </button>
 
               <button
@@ -574,7 +596,7 @@ export function VehiclesPageContent() {
                 }`}
               >
                 <Bike className="size-4" />
-                Bikes ({ALL_VEHICLES.filter((v) => v.category === "bike").length})
+                Bikes ({vehicleCounts.bike})
               </button>
 
               <button
@@ -589,7 +611,7 @@ export function VehiclesPageContent() {
                 }`}
               >
                 <ScooterIcon className="size-4" />
-                Scooters ({ALL_VEHICLES.filter((v) => v.category === "scooter").length})
+                Scooters ({vehicleCounts.scooter})
               </button>
 
               <button
@@ -604,7 +626,7 @@ export function VehiclesPageContent() {
                 }`}
               >
                 <Car className="size-4" />
-                Cars ({ALL_VEHICLES.filter((v) => v.category === "car").length})
+                Cars ({vehicleCounts.car})
               </button>
             </div>
 
