@@ -116,6 +116,9 @@ const ENDPOINTS_TO_TEST: EndpointTest[] = [
     method: "POST",
     path: "/api/v1/auth/forgot-password",
     body: {
+      email: "demo@rypp.in",
+    },
+  },
   {
     id: "v1_bookings_my",
     name: "My Bookings (/api/v1/bookings/my)",
