@@ -11,22 +11,42 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { id } = await params;
-  const { vehicle } = await vehiclesApi.getVehicleById(id);
-  if (!vehicle) return { title: "Vehicle Not Found | RYPP" };
+  try {
+    const { id } = await params;
+    const { vehicle } = await vehiclesApi.getVehicleById(id);
+    if (!vehicle) return { title: "Vehicle Rental in Bengaluru | RYPP" };
 
-  return {
-    title: `${vehicle.name} Rental in Bengaluru | RYPP`,
-    description: `Rent ${vehicle.name} in Bengaluru starting at ₹${vehicle.pricePerDay}/day. Verified vehicles, zero hidden costs, free cancellation up to 24 hours.`,
-  };
+    return {
+      title: `${vehicle.name} Rental in Bengaluru | RYPP`,
+      description: `Rent ${vehicle.name} in Bengaluru starting at ₹${vehicle.pricePerDay}/day. Verified vehicles, zero hidden costs, free cancellation up to 24 hours.`,
+    };
+  } catch {
+    return { title: "Vehicle Rental in Bengaluru | RYPP" };
+  }
 }
 
 export default async function VehicleDetailPage({ params }: PageProps) {
-  const { id } = await params;
-  const [{ vehicle }, { vehicles: allDbVehicles }] = await Promise.all([
-    vehiclesApi.getVehicleById(id),
-    vehiclesApi.getVehicles(),
-  ]);
+  let id = "1";
+  try {
+    const p = await params;
+    if (p?.id) id = p.id;
+  } catch {
+    // fallback
+  }
+
+  let vehicle: any = null;
+  let allDbVehicles: any[] = [];
+
+  try {
+    const [detailRes, listRes] = await Promise.all([
+      vehiclesApi.getVehicleById(id),
+      vehiclesApi.getVehicles(),
+    ]);
+    vehicle = detailRes?.vehicle || null;
+    allDbVehicles = listRes?.vehicles || [];
+  } catch (err) {
+    console.error(`[VehicleDetailPage] Error fetching vehicle ${id}:`, err);
+  }
 
   if (!vehicle) {
     notFound();

@@ -23,6 +23,13 @@ export async function PUT(
   return handleProxy(request, context, "PUT");
 }
 
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ path: string[] }> }
+) {
+  return handleProxy(request, context, "PATCH");
+}
+
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ path: string[] }> }
@@ -35,7 +42,7 @@ export async function OPTIONS() {
     status: 200,
     headers: {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
     },
   });

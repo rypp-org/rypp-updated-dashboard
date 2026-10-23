@@ -116,8 +116,47 @@ const ENDPOINTS_TO_TEST: EndpointTest[] = [
     method: "POST",
     path: "/api/v1/auth/forgot-password",
     body: {
-      email: "demo@rypp.in",
-    },
+  {
+    id: "v1_bookings_my",
+    name: "My Bookings (/api/v1/bookings/my)",
+    method: "GET",
+    path: "/api/v1/bookings/my",
+  },
+  {
+    id: "v1_bookings_ongoing",
+    name: "My Ongoing Bookings (/api/v1/bookings/my/ongoing)",
+    method: "GET",
+    path: "/api/v1/bookings/my/ongoing",
+  },
+  {
+    id: "v1_bookings_upcoming",
+    name: "My Upcoming Bookings (/api/v1/bookings/my/upcoming)",
+    method: "GET",
+    path: "/api/v1/bookings/my/upcoming",
+  },
+  {
+    id: "v1_bookings_owner_all",
+    name: "Owner All Bookings (/api/v1/bookings/owner/all)",
+    method: "GET",
+    path: "/api/v1/bookings/owner/all",
+  },
+  {
+    id: "v1_bookings_owner_today",
+    name: "Owner Today Bookings (/api/v1/bookings/owner/today)",
+    method: "GET",
+    path: "/api/v1/bookings/owner/today",
+  },
+  {
+    id: "v1_ratings_vehicle",
+    name: "Vehicle Ratings (/api/v1/booking-ratings/vehicle/1)",
+    method: "GET",
+    path: "/api/v1/booking-ratings/vehicle/1",
+  },
+  {
+    id: "v1_ratings_my",
+    name: "My Ratings (/api/v1/booking-ratings/my)",
+    method: "GET",
+    path: "/api/v1/booking-ratings/my",
   },
 ];
 

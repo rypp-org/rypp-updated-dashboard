@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Kaushan_Script, Poppins } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./_context/AuthContext";
+import { LocationProvider } from "./_context/LocationContext";
 import { AuthModal } from "./_components/AuthModal";
 
 const poppins = Poppins({
@@ -27,8 +28,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${poppins.variable} ${kaushan.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <AuthProvider>
-          {children}
-          <AuthModal />
+          <LocationProvider>
+            {children}
+            <AuthModal />
+          </LocationProvider>
         </AuthProvider>
       </body>
     </html>

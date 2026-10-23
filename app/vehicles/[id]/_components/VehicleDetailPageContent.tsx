@@ -101,7 +101,13 @@ export function VehicleDetailPageContent({ vehicle, dates, similarVehicles = [] 
             {/* Main Image Carousel */}
             <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-gray-100 border border-line shadow-xs group">
               <Image
-                src={vehicle.gallery[activeImageIndex] || vehicle.image}
+                src={
+                  (vehicle.gallery && vehicle.gallery[activeImageIndex] && vehicle.gallery[activeImageIndex].trim())
+                    ? vehicle.gallery[activeImageIndex].trim()
+                    : (vehicle.image && vehicle.image.trim())
+                    ? vehicle.image.trim()
+                    : "/images/photos/v-himalayan.jpg"
+                }
                 alt={`${vehicle.name} view ${activeImageIndex + 1}`}
                 fill
                 priority
@@ -521,7 +527,13 @@ export function VehicleDetailPageContent({ vehicle, dates, similarVehicles = [] 
             {similarVehicles.map((item) => (
               <div key={item.id} className="rounded-xl border border-line bg-white overflow-hidden shadow-2xs hover:shadow-md transition">
                 <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
-                  <Image src={item.image} alt={item.name} fill sizes="(min-width: 1280px) 200px, (min-width: 768px) 33vw, 50vw" className="object-cover" />
+                  <Image
+                    src={item.image && item.image.trim() ? item.image.trim() : "/images/photos/v-himalayan.jpg"}
+                    alt={item.name || "Vehicle"}
+                    fill
+                    sizes="(min-width: 1280px) 200px, (min-width: 768px) 33vw, 50vw"
+                    className="object-cover"
+                  />
                 </div>
                 <div className="p-3 space-y-2">
                   <h4 className="font-bold text-ink text-xs line-clamp-1">{item.name}</h4>

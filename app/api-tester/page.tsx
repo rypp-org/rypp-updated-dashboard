@@ -24,11 +24,15 @@ import {
   Smartphone,
   User,
   Activity,
+  CalendarCheck,
+  Star,
+  BookmarkCheck,
 } from "lucide-react";
 import { Header } from "../_components/Header";
 import { Footer } from "../_components/Footer";
 import { authApi } from "../_lib/api/auth";
 import { vehiclesApi } from "../_lib/api/vehicles";
+import { bookingsApi } from "../_lib/api/bookings";
 import { getStoredToken } from "../_lib/api/client";
 
 interface TestResult {
@@ -42,7 +46,7 @@ interface TestResult {
 
 export default function ApiTesterPage() {
   const [token, setToken] = useState<string | null>(getStoredToken());
-  const [activeTab, setActiveTab] = useState<"all" | "auth" | "vehicles">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "auth" | "vehicles" | "bookings" | "ratings">("all");
   const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
   const [results, setResults] = useState<Record<string, TestResult>>({});
   const [batchRunning, setBatchRunning] = useState(false);
@@ -71,10 +75,26 @@ export default function ApiTesterPage() {
 
   // Vehicles Inputs
   const [testVehicleCategory, setTestVehicleCategory] = useState("all");
-  const [testVehicleId, setTestVehicleId] = useState("re-himalayan");
+  const [testVehicleId, setTestVehicleId] = useState("1");
 
   const [availStartDate, setAvailStartDate] = useState("2026-10-15");
   const [availEndDate, setAvailEndDate] = useState("2026-10-18");
+
+  // Bookings Inputs
+  const [testBookingId, setTestBookingId] = useState("1");
+  const [testBookingVehicleId, setTestBookingVehicleId] = useState("1");
+  const [testBookingStart, setTestBookingStart] = useState("2026-10-25");
+  const [testBookingEnd, setTestBookingEnd] = useState("2026-10-27");
+  const [testBookingAmount, setTestBookingAmount] = useState(1600);
+  const [testBookingReason, setTestBookingReason] = useState("Customer requested cancellation");
+  const [testBookingStatus, setTestBookingStatus] = useState("confirmed");
+  const [testPaymentStatus, setTestPaymentStatus] = useState("paid");
+
+  // Ratings Inputs
+  const [testRatingScore, setTestRatingScore] = useState(5);
+  const [testRatingComment, setTestRatingComment] = useState("Smooth ride, well maintained vehicle!");
+  const [testRatingVehicleId, setTestRatingVehicleId] = useState("1");
+  const [testRatingVendorId, setTestRatingVendorId] = useState("1");
 
   const runTest = async (key: string, runner: () => Promise<any>, endpoint: string, method: string) => {
     setLoadingMap((prev) => ({ ...prev, [key]: true }));
@@ -165,6 +185,105 @@ export default function ApiTesterPage() {
       `/api/v1/vehicles/${testVehicleId}/availability`,
       "GET"
     );
+
+  // --- Bookings Runners (Customer) ---
+  const testCreateBooking = () =>
+    runTest("booking_create", () => bookingsApi.createBooking({
+      vehicle_id: testBookingVehicleId,
+      start_date: testBookingStart,
+      end_date: testBookingEnd,
+      total_amount: Number(testBookingAmount),
+      total_price: Number(testBookingAmount),
+      customer_name: "Test Rider",
+      customer_email: "demo@rypp.in",
+      customer_phone: "+91 98765 43210",
+      pickup_location: "Bengaluru",
+      drop_location: "Bengaluru",
+      payment_method: "upi",
+      payment_status: "paid",
+    }), "/api/v1/bookings/", "POST");
+
+  const testGetMyBookings = () =>
+    runTest("booking_my", () => bookingsApi.getMyBookings(), "/api/v1/bookings/my", "GET");
+
+  const testGetMyOngoing = () =>
+    runTest("booking_my_ongoing", () => bookingsApi.getMyOngoingBookings(), "/api/v1/bookings/my/ongoing", "GET");
+
+  const testGetMyUpcoming = () =>
+    runTest("booking_my_upcoming", () => bookingsApi.getMyUpcomingBookings(), "/api/v1/bookings/my/upcoming", "GET");
+
+  const testGetMyCompleted = () =>
+    runTest("booking_my_completed", () => bookingsApi.getMyCompletedBookings(), "/api/v1/bookings/my/completed", "GET");
+
+  const testGetMyCancelled = () =>
+    runTest("booking_my_cancelled", () => bookingsApi.getMyCancelledBookings(), "/api/v1/bookings/my/cancelled", "GET");
+
+  const testGetBooking = () =>
+    runTest("booking_detail", () => bookingsApi.getBooking(testBookingId), `/api/v1/bookings/${testBookingId}`, "GET");
+
+  const testDeleteBooking = () =>
+    runTest("booking_delete", () => bookingsApi.deleteBooking(testBookingId), `/api/v1/bookings/${testBookingId}`, "DELETE");
+
+  // --- Bookings Runners (Owner / Lifecycle) ---
+  const testGetOwnerAll = () =>
+    runTest("booking_owner_all", () => bookingsApi.getOwnerBookings(), "/api/v1/bookings/owner/all", "GET");
+
+  const testGetOwnerToday = () =>
+    runTest("booking_owner_today", () => bookingsApi.getOwnerTodayBookings(), "/api/v1/bookings/owner/today", "GET");
+
+  const testGetOwnerOngoing = () =>
+    runTest("booking_owner_ongoing", () => bookingsApi.getOwnerOngoingBookings(), "/api/v1/bookings/owner/ongoing", "GET");
+
+  const testGetOwnerUpcoming = () =>
+    runTest("booking_owner_upcoming", () => bookingsApi.getOwnerUpcomingBookings(), "/api/v1/bookings/owner/upcoming", "GET");
+
+  const testGetOwnerPending = () =>
+    runTest("booking_owner_pending", () => bookingsApi.getOwnerPendingBookings(), "/api/v1/bookings/owner/pending", "GET");
+
+  const testGetOwnerCompleted = () =>
+    runTest("booking_owner_completed", () => bookingsApi.getOwnerCompletedBookings(), "/api/v1/bookings/owner/completed", "GET");
+
+  const testGetOwnerCancelled = () =>
+    runTest("booking_owner_cancelled", () => bookingsApi.getOwnerCancelledBookings(), "/api/v1/bookings/owner/cancelled", "GET");
+
+  const testApproveBooking = () =>
+    runTest("booking_approve", () => bookingsApi.approveBooking(testBookingId, "Approved by fleet partner"), `/api/v1/bookings/${testBookingId}/approve`, "PATCH");
+
+  const testRejectBooking = () =>
+    runTest("booking_reject", () => bookingsApi.rejectBooking(testBookingId, testBookingReason), `/api/v1/bookings/${testBookingId}/reject`, "PATCH");
+
+  const testCompleteBooking = () =>
+    runTest("booking_complete", () => bookingsApi.completeBooking(testBookingId), `/api/v1/bookings/${testBookingId}/complete`, "PATCH");
+
+  const testCancelBooking = () =>
+    runTest("booking_cancel", () => bookingsApi.cancelBooking(testBookingId, testBookingReason), `/api/v1/bookings/${testBookingId}/cancel`, "PATCH");
+
+  const testUpdateBookingStatus = () =>
+    runTest("booking_status", () => bookingsApi.updateBookingStatus(testBookingId, testBookingStatus, testBookingReason), `/api/v1/bookings/${testBookingId}/status`, "PATCH");
+
+  const testUpdatePaymentStatus = () =>
+    runTest("booking_payment", () => bookingsApi.updatePaymentStatus(testBookingId, testPaymentStatus, "TXN_" + Date.now()), `/api/v1/bookings/${testBookingId}/payment`, "PATCH");
+
+  // --- Ratings Runners ---
+  const testCreateRating = () =>
+    runTest("rating_create", () => bookingsApi.createBookingRating(testBookingId, {
+      rating: Number(testRatingScore),
+      comment: testRatingComment,
+      cleanliness_rating: 5,
+      maintenance_rating: 5,
+    }), `/api/v1/booking-ratings/${testBookingId}`, "POST");
+
+  const testGetBookingRating = () =>
+    runTest("rating_booking", () => bookingsApi.getBookingRating(testBookingId), `/api/v1/booking-ratings/booking/${testBookingId}`, "GET");
+
+  const testGetVehicleRatings = () =>
+    runTest("rating_vehicle", () => bookingsApi.getVehicleRatings(testRatingVehicleId), `/api/v1/booking-ratings/vehicle/${testRatingVehicleId}`, "GET");
+
+  const testGetVendorRatings = () =>
+    runTest("rating_vendor", () => bookingsApi.getVendorRatings(testRatingVendorId), `/api/v1/booking-ratings/vendor/${testRatingVendorId}`, "GET");
+
+  const testGetMyRatings = () =>
+    runTest("rating_my", () => bookingsApi.getMyRatings(), "/api/v1/booking-ratings/my", "GET");
 
   const [auditRunning, setAuditRunning] = useState(false);
   const [auditReport, setAuditReport] = useState<any>(null);
@@ -370,7 +489,7 @@ export default function ApiTesterPage() {
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="rounded-2xl border border-line bg-white p-4 shadow-xs">
             <span className="text-[11px] font-semibold text-muted uppercase">Endpoints</span>
-            <p className="text-xl font-extrabold text-ink mt-0.5">19 Total</p>
+            <p className="text-xl font-extrabold text-ink mt-0.5">42 Total</p>
           </div>
           <div className="rounded-2xl border border-line bg-white p-4 shadow-xs">
             <span className="text-[11px] font-semibold text-muted uppercase">Tested</span>
@@ -387,20 +506,20 @@ export default function ApiTesterPage() {
         </div>
 
         {/* Category Tabs */}
-        <div className="mt-8 flex rounded-xl bg-line/60 p-1 text-xs font-semibold max-w-md">
+        <div className="mt-8 flex flex-wrap rounded-xl bg-line/60 p-1 text-xs font-semibold max-w-2xl gap-1">
           <button
             type="button"
             onClick={() => setActiveTab("all")}
-            className={`flex-1 rounded-lg py-2 transition flex items-center justify-center gap-1.5 ${
+            className={`flex-1 min-w-[90px] rounded-lg py-2 transition flex items-center justify-center gap-1.5 ${
               activeTab === "all" ? "bg-white text-ink shadow-sm font-bold" : "text-muted hover:text-ink"
             }`}
           >
-            <Layers className="size-3.5" /> All Endpoints (19)
+            <Layers className="size-3.5" /> All (42)
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("auth")}
-            className={`flex-1 rounded-lg py-2 transition flex items-center justify-center gap-1.5 ${
+            className={`flex-1 min-w-[80px] rounded-lg py-2 transition flex items-center justify-center gap-1.5 ${
               activeTab === "auth" ? "bg-white text-ink shadow-sm font-bold" : "text-muted hover:text-ink"
             }`}
           >
@@ -409,11 +528,29 @@ export default function ApiTesterPage() {
           <button
             type="button"
             onClick={() => setActiveTab("vehicles")}
-            className={`flex-1 rounded-lg py-2 transition flex items-center justify-center gap-1.5 ${
+            className={`flex-1 min-w-[80px] rounded-lg py-2 transition flex items-center justify-center gap-1.5 ${
               activeTab === "vehicles" ? "bg-white text-ink shadow-sm font-bold" : "text-muted hover:text-ink"
             }`}
           >
-            <Truck className="size-3.5" /> Vehicles (8)
+            <Truck className="size-3.5" /> Fleet (5)
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("bookings")}
+            className={`flex-1 min-w-[100px] rounded-lg py-2 transition flex items-center justify-center gap-1.5 ${
+              activeTab === "bookings" ? "bg-white text-ink shadow-sm font-bold" : "text-muted hover:text-ink"
+            }`}
+          >
+            <CalendarCheck className="size-3.5" /> Bookings (21)
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("ratings")}
+            className={`flex-1 min-w-[90px] rounded-lg py-2 transition flex items-center justify-center gap-1.5 ${
+              activeTab === "ratings" ? "bg-white text-ink shadow-sm font-bold" : "text-muted hover:text-ink"
+            }`}
+          >
+            <Star className="size-3.5" /> Ratings (5)
           </button>
         </div>
 
@@ -857,6 +994,598 @@ export default function ApiTesterPage() {
               />
             </>
           )}
+
+          {/* SECTION 3: BOOKINGS APIS */}
+          {(activeTab === "all" || activeTab === "bookings") && (
+            <>
+              <div className="border-b border-line pb-2 pt-6">
+                <h2 className="text-base font-bold text-ink flex items-center gap-2">
+                  <CalendarCheck className="size-4 text-brand" />
+                  Booking Endpoints (21 APIs)
+                </h2>
+                <p className="text-xs text-muted mt-0.5">
+                  Full customer reservation flow, partner fleet overview, and lifecycle actions (approve, reject, cancel, complete, status, payment).
+                </p>
+              </div>
+
+              {/* B1: Create Booking */}
+              <ApiCard
+                num="B1"
+                title="Create Booking"
+                method="POST"
+                endpoint="/api/v1/bookings/"
+                desc="Creates a new vehicle reservation with trip dates, pickup details, and pricing."
+                loading={Boolean(loadingMap["booking_create"])}
+                result={results["booking_create"]}
+                onRun={testCreateBooking}
+                inputs={
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mt-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Vehicle ID</label>
+                      <input
+                        type="text"
+                        value={testBookingVehicleId}
+                        onChange={(e) => setTestBookingVehicleId(e.target.value)}
+                        className="w-full text-xs font-mono font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Pickup Date</label>
+                      <input
+                        type="date"
+                        value={testBookingStart}
+                        onChange={(e) => setTestBookingStart(e.target.value)}
+                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Drop Date</label>
+                      <input
+                        type="date"
+                        value={testBookingEnd}
+                        onChange={(e) => setTestBookingEnd(e.target.value)}
+                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Total Amount (₹)</label>
+                      <input
+                        type="number"
+                        value={testBookingAmount}
+                        onChange={(e) => setTestBookingAmount(Number(e.target.value))}
+                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      />
+                    </div>
+                  </div>
+                }
+              />
+
+              {/* B2: Get My Bookings */}
+              <ApiCard
+                num="B2"
+                title="Get My Bookings"
+                method="GET"
+                endpoint="/api/v1/bookings/my"
+                desc="Fetches all bookings belonging to the currently logged in user."
+                loading={Boolean(loadingMap["booking_my"])}
+                result={results["booking_my"]}
+                onRun={testGetMyBookings}
+              />
+
+              {/* B3: Get My Ongoing Bookings */}
+              <ApiCard
+                num="B3"
+                title="Get My Ongoing Bookings"
+                method="GET"
+                endpoint="/api/v1/bookings/my/ongoing"
+                desc="Returns active, in-progress vehicle trips for the user."
+                loading={Boolean(loadingMap["booking_my_ongoing"])}
+                result={results["booking_my_ongoing"]}
+                onRun={testGetMyOngoing}
+              />
+
+              {/* B4: Get My Upcoming Bookings */}
+              <ApiCard
+                num="B4"
+                title="Get My Upcoming Bookings"
+                method="GET"
+                endpoint="/api/v1/bookings/my/upcoming"
+                desc="Returns scheduled future reservations awaiting pickup."
+                loading={Boolean(loadingMap["booking_my_upcoming"])}
+                result={results["booking_my_upcoming"]}
+                onRun={testGetMyUpcoming}
+              />
+
+              {/* B5: Get My Completed Bookings */}
+              <ApiCard
+                num="B5"
+                title="Get My Completed Bookings"
+                method="GET"
+                endpoint="/api/v1/bookings/my/completed"
+                desc="Returns past, successfully finished rentals."
+                loading={Boolean(loadingMap["booking_my_completed"])}
+                result={results["booking_my_completed"]}
+                onRun={testGetMyCompleted}
+              />
+
+              {/* B6: Get My Cancelled Bookings */}
+              <ApiCard
+                num="B6"
+                title="Get My Cancelled Bookings"
+                method="GET"
+                endpoint="/api/v1/bookings/my/cancelled"
+                desc="Returns previously cancelled reservations."
+                loading={Boolean(loadingMap["booking_my_cancelled"])}
+                result={results["booking_my_cancelled"]}
+                onRun={testGetMyCancelled}
+              />
+
+              {/* B7: Get Booking Details */}
+              <ApiCard
+                num="B7"
+                title="Get Booking Details"
+                method="GET"
+                endpoint="/api/v1/bookings/{booking_id}"
+                desc="Fetches full details for a specific reservation."
+                loading={Boolean(loadingMap["booking_detail"])}
+                result={results["booking_detail"]}
+                onRun={testGetBooking}
+                inputs={
+                  <div className="mt-3 max-w-xs">
+                    <label className="text-[11px] font-semibold text-muted block mb-1">Booking ID</label>
+                    <input
+                      type="text"
+                      value={testBookingId}
+                      onChange={(e) => setTestBookingId(e.target.value)}
+                      className="w-full text-xs font-mono font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                    />
+                  </div>
+                }
+              />
+
+              {/* B8: Delete Booking */}
+              <ApiCard
+                num="B8"
+                title="Delete Booking"
+                method="DELETE"
+                endpoint="/api/v1/bookings/{booking_id}"
+                desc="Permanently removes a booking from the database."
+                loading={Boolean(loadingMap["booking_delete"])}
+                result={results["booking_delete"]}
+                onRun={testDeleteBooking}
+                inputs={
+                  <div className="mt-3 max-w-xs">
+                    <label className="text-[11px] font-semibold text-muted block mb-1">Booking ID to Delete</label>
+                    <input
+                      type="text"
+                      value={testBookingId}
+                      onChange={(e) => setTestBookingId(e.target.value)}
+                      className="w-full text-xs font-mono font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                    />
+                  </div>
+                }
+              />
+
+              {/* B9: Get Owner All Bookings */}
+              <ApiCard
+                num="B9"
+                title="Get Owner Bookings"
+                method="GET"
+                endpoint="/api/v1/bookings/owner/all"
+                desc="Returns all vehicle reservations across the owner's fleet."
+                loading={Boolean(loadingMap["booking_owner_all"])}
+                result={results["booking_owner_all"]}
+                onRun={testGetOwnerAll}
+              />
+
+              {/* B10: Get Owner Today Bookings */}
+              <ApiCard
+                num="B10"
+                title="Get Owner Today Bookings"
+                method="GET"
+                endpoint="/api/v1/bookings/owner/today"
+                desc="Returns trips starting or returning today for the fleet."
+                loading={Boolean(loadingMap["booking_owner_today"])}
+                result={results["booking_owner_today"]}
+                onRun={testGetOwnerToday}
+              />
+
+              {/* B11: Get Owner Ongoing Bookings */}
+              <ApiCard
+                num="B11"
+                title="Get Owner Ongoing Bookings"
+                method="GET"
+                endpoint="/api/v1/bookings/owner/ongoing"
+                desc="Returns all fleet vehicles currently out on the road."
+                loading={Boolean(loadingMap["booking_owner_ongoing"])}
+                result={results["booking_owner_ongoing"]}
+                onRun={testGetOwnerOngoing}
+              />
+
+              {/* B12: Get Owner Upcoming Bookings */}
+              <ApiCard
+                num="B12"
+                title="Get Owner Upcoming Bookings"
+                method="GET"
+                endpoint="/api/v1/bookings/owner/upcoming"
+                desc="Returns scheduled fleet reservations awaiting dispatch."
+                loading={Boolean(loadingMap["booking_owner_upcoming"])}
+                result={results["booking_owner_upcoming"]}
+                onRun={testGetOwnerUpcoming}
+              />
+
+              {/* B13: Get Owner Pending Bookings */}
+              <ApiCard
+                num="B13"
+                title="Get Owner Pending Bookings"
+                method="GET"
+                endpoint="/api/v1/bookings/owner/pending"
+                desc="Returns reservations awaiting partner acceptance or approval."
+                loading={Boolean(loadingMap["booking_owner_pending"])}
+                result={results["booking_owner_pending"]}
+                onRun={testGetOwnerPending}
+              />
+
+              {/* B14: Get Owner Completed Bookings */}
+              <ApiCard
+                num="B14"
+                title="Get Owner Completed Bookings"
+                method="GET"
+                endpoint="/api/v1/bookings/owner/completed"
+                desc="Returns completed rentals for owner settlement."
+                loading={Boolean(loadingMap["booking_owner_completed"])}
+                result={results["booking_owner_completed"]}
+                onRun={testGetOwnerCompleted}
+              />
+
+              {/* B15: Get Owner Cancelled Bookings */}
+              <ApiCard
+                num="B15"
+                title="Get Owner Cancelled Bookings"
+                method="GET"
+                endpoint="/api/v1/bookings/owner/cancelled"
+                desc="Returns cancelled fleet reservations."
+                loading={Boolean(loadingMap["booking_owner_cancelled"])}
+                result={results["booking_owner_cancelled"]}
+                onRun={testGetOwnerCancelled}
+              />
+
+              {/* B16: Approve Booking */}
+              <ApiCard
+                num="B16"
+                title="Approve Booking"
+                method="PATCH"
+                endpoint="/api/v1/bookings/{booking_id}/approve"
+                desc="Confirms and locks in a pending reservation."
+                loading={Boolean(loadingMap["booking_approve"])}
+                result={results["booking_approve"]}
+                onRun={testApproveBooking}
+                inputs={
+                  <div className="mt-3 max-w-xs">
+                    <label className="text-[11px] font-semibold text-muted block mb-1">Booking ID</label>
+                    <input
+                      type="text"
+                      value={testBookingId}
+                      onChange={(e) => setTestBookingId(e.target.value)}
+                      className="w-full text-xs font-mono font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                    />
+                  </div>
+                }
+              />
+
+              {/* B17: Reject Booking */}
+              <ApiCard
+                num="B17"
+                title="Reject Booking"
+                method="PATCH"
+                endpoint="/api/v1/bookings/{booking_id}/reject"
+                desc="Rejects a pending booking with a reason."
+                loading={Boolean(loadingMap["booking_reject"])}
+                result={results["booking_reject"]}
+                onRun={testRejectBooking}
+                inputs={
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Booking ID</label>
+                      <input
+                        type="text"
+                        value={testBookingId}
+                        onChange={(e) => setTestBookingId(e.target.value)}
+                        className="w-full text-xs font-mono font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Rejection Reason</label>
+                      <input
+                        type="text"
+                        value={testBookingReason}
+                        onChange={(e) => setTestBookingReason(e.target.value)}
+                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      />
+                    </div>
+                  </div>
+                }
+              />
+
+              {/* B18: Complete Booking */}
+              <ApiCard
+                num="B18"
+                title="Complete Booking"
+                method="PATCH"
+                endpoint="/api/v1/bookings/{booking_id}/complete"
+                desc="Marks an active booking as completed upon vehicle return."
+                loading={Boolean(loadingMap["booking_complete"])}
+                result={results["booking_complete"]}
+                onRun={testCompleteBooking}
+                inputs={
+                  <div className="mt-3 max-w-xs">
+                    <label className="text-[11px] font-semibold text-muted block mb-1">Booking ID</label>
+                    <input
+                      type="text"
+                      value={testBookingId}
+                      onChange={(e) => setTestBookingId(e.target.value)}
+                      className="w-full text-xs font-mono font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                    />
+                  </div>
+                }
+              />
+
+              {/* B19: Cancel Booking */}
+              <ApiCard
+                num="B19"
+                title="Cancel Booking"
+                method="PATCH"
+                endpoint="/api/v1/bookings/{booking_id}/cancel"
+                desc="Cancels an upcoming booking."
+                loading={Boolean(loadingMap["booking_cancel"])}
+                result={results["booking_cancel"]}
+                onRun={testCancelBooking}
+                inputs={
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Booking ID</label>
+                      <input
+                        type="text"
+                        value={testBookingId}
+                        onChange={(e) => setTestBookingId(e.target.value)}
+                        className="w-full text-xs font-mono font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Cancellation Reason</label>
+                      <input
+                        type="text"
+                        value={testBookingReason}
+                        onChange={(e) => setTestBookingReason(e.target.value)}
+                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      />
+                    </div>
+                  </div>
+                }
+              />
+
+              {/* B20: Update Booking Status */}
+              <ApiCard
+                num="B20"
+                title="Update Booking Status"
+                method="PATCH"
+                endpoint="/api/v1/bookings/{booking_id}/status"
+                desc="Directly transitions the booking status state machine."
+                loading={Boolean(loadingMap["booking_status"])}
+                result={results["booking_status"]}
+                onRun={testUpdateBookingStatus}
+                inputs={
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Booking ID</label>
+                      <input
+                        type="text"
+                        value={testBookingId}
+                        onChange={(e) => setTestBookingId(e.target.value)}
+                        className="w-full text-xs font-mono font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Target Status</label>
+                      <select
+                        value={testBookingStatus}
+                        onChange={(e) => setTestBookingStatus(e.target.value)}
+                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      >
+                        <option value="pending">pending</option>
+                        <option value="confirmed">confirmed</option>
+                        <option value="ongoing">ongoing</option>
+                        <option value="completed">completed</option>
+                        <option value="cancelled">cancelled</option>
+                      </select>
+                    </div>
+                  </div>
+                }
+              />
+
+              {/* B21: Update Payment Status */}
+              <ApiCard
+                num="B21"
+                title="Update Payment Status"
+                method="PATCH"
+                endpoint="/api/v1/bookings/{booking_id}/payment"
+                desc="Updates payment settlement status and transaction ID."
+                loading={Boolean(loadingMap["booking_payment"])}
+                result={results["booking_payment"]}
+                onRun={testUpdatePaymentStatus}
+                inputs={
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Booking ID</label>
+                      <input
+                        type="text"
+                        value={testBookingId}
+                        onChange={(e) => setTestBookingId(e.target.value)}
+                        className="w-full text-xs font-mono font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Payment Status</label>
+                      <select
+                        value={testPaymentStatus}
+                        onChange={(e) => setTestPaymentStatus(e.target.value)}
+                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      >
+                        <option value="pending">pending</option>
+                        <option value="paid">paid</option>
+                        <option value="failed">failed</option>
+                        <option value="refunded">refunded</option>
+                      </select>
+                    </div>
+                  </div>
+                }
+              />
+            </>
+          )}
+
+          {/* SECTION 4: BOOKING RATINGS APIS */}
+          {(activeTab === "all" || activeTab === "ratings") && (
+            <>
+              <div className="border-b border-line pb-2 pt-6">
+                <h2 className="text-base font-bold text-ink flex items-center gap-2">
+                  <Star className="size-4 text-amber-500 fill-amber-500" />
+                  Booking Rating Endpoints (5 APIs)
+                </h2>
+                <p className="text-xs text-muted mt-0.5">
+                  Customer feedback, vehicle ratings, vendor scores, and submitted reviews.
+                </p>
+              </div>
+
+              {/* R1: Create Rating */}
+              <ApiCard
+                num="R1"
+                title="Create Booking Rating"
+                method="POST"
+                endpoint="/api/v1/booking-ratings/{booking_id}"
+                desc="Submits a review and star ratings for a completed booking."
+                loading={Boolean(loadingMap["rating_create"])}
+                result={results["rating_create"]}
+                onRun={testCreateRating}
+                inputs={
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Booking ID</label>
+                      <input
+                        type="text"
+                        value={testBookingId}
+                        onChange={(e) => setTestBookingId(e.target.value)}
+                        className="w-full text-xs font-mono font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Stars (1-5)</label>
+                      <select
+                        value={testRatingScore}
+                        onChange={(e) => setTestRatingScore(Number(e.target.value))}
+                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      >
+                        <option value={5}>⭐⭐⭐⭐⭐ (5 Stars)</option>
+                        <option value={4}>⭐⭐⭐⭐ (4 Stars)</option>
+                        <option value={3}>⭐⭐⭐ (3 Stars)</option>
+                        <option value={2}>⭐⭐ (2 Stars)</option>
+                        <option value={1}>⭐ (1 Star)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted block mb-1">Feedback Comment</label>
+                      <input
+                        type="text"
+                        value={testRatingComment}
+                        onChange={(e) => setTestRatingComment(e.target.value)}
+                        className="w-full text-xs font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                      />
+                    </div>
+                  </div>
+                }
+              />
+
+              {/* R2: Get Booking Rating */}
+              <ApiCard
+                num="R2"
+                title="Get Booking Rating"
+                method="GET"
+                endpoint="/api/v1/booking-ratings/booking/{booking_id}"
+                desc="Fetches the rating and review attached to a specific booking."
+                loading={Boolean(loadingMap["rating_booking"])}
+                result={results["rating_booking"]}
+                onRun={testGetBookingRating}
+                inputs={
+                  <div className="mt-3 max-w-xs">
+                    <label className="text-[11px] font-semibold text-muted block mb-1">Booking ID</label>
+                    <input
+                      type="text"
+                      value={testBookingId}
+                      onChange={(e) => setTestBookingId(e.target.value)}
+                      className="w-full text-xs font-mono font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                    />
+                  </div>
+                }
+              />
+
+              {/* R3: Get Vehicle Ratings */}
+              <ApiCard
+                num="R3"
+                title="Get Vehicle Ratings"
+                method="GET"
+                endpoint="/api/v1/booking-ratings/vehicle/{vehicle_id}"
+                desc="Returns all aggregate ratings and reviews for a fleet vehicle."
+                loading={Boolean(loadingMap["rating_vehicle"])}
+                result={results["rating_vehicle"]}
+                onRun={testGetVehicleRatings}
+                inputs={
+                  <div className="mt-3 max-w-xs">
+                    <label className="text-[11px] font-semibold text-muted block mb-1">Vehicle ID</label>
+                    <input
+                      type="text"
+                      value={testRatingVehicleId}
+                      onChange={(e) => setTestRatingVehicleId(e.target.value)}
+                      className="w-full text-xs font-mono font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                    />
+                  </div>
+                }
+              />
+
+              {/* R4: Get Vendor Ratings */}
+              <ApiCard
+                num="R4"
+                title="Get Vendor Ratings"
+                method="GET"
+                endpoint="/api/v1/booking-ratings/vendor/{vendor_id}"
+                desc="Returns customer satisfaction ratings for a fleet partner vendor."
+                loading={Boolean(loadingMap["rating_vendor"])}
+                result={results["rating_vendor"]}
+                onRun={testGetVendorRatings}
+                inputs={
+                  <div className="mt-3 max-w-xs">
+                    <label className="text-[11px] font-semibold text-muted block mb-1">Vendor ID</label>
+                    <input
+                      type="text"
+                      value={testRatingVendorId}
+                      onChange={(e) => setTestRatingVendorId(e.target.value)}
+                      className="w-full text-xs font-mono font-medium rounded-lg border border-line px-3 py-1.5 focus:border-brand focus:outline-none bg-white"
+                    />
+                  </div>
+                }
+              />
+
+              {/* R5: Get My Ratings */}
+              <ApiCard
+                num="R5"
+                title="Get My Ratings"
+                method="GET"
+                endpoint="/api/v1/booking-ratings/my"
+                desc="Fetches all ratings and feedback submitted by the current user."
+                loading={Boolean(loadingMap["rating_my"])}
+                result={results["rating_my"]}
+                onRun={testGetMyRatings}
+              />
+            </>
+          )}
         </div>
       </main>
       <Footer />
@@ -877,7 +1606,7 @@ function ApiCard({
 }: {
   num: string;
   title: string;
-  method: "GET" | "POST" | "PUT" | "DELETE";
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   endpoint: string;
   desc: string;
   inputs?: React.ReactNode;
@@ -892,6 +1621,8 @@ function ApiCard({
       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
       : method === "PUT"
       ? "bg-amber-50 text-amber-700 border-amber-200"
+      : method === "PATCH"
+      ? "bg-teal-50 text-teal-700 border-teal-200"
       : "bg-red-50 text-red-700 border-red-200";
 
   return (

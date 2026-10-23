@@ -173,3 +173,116 @@ export interface ApiErrorResponse {
   message?: string;
   error?: string;
 }
+
+// ================= BOOKING TYPES =================
+
+export type BookingStatus =
+  | "pending"
+  | "confirmed"
+  | "ongoing"
+  | "completed"
+  | "cancelled"
+  | "rejected"
+  | string;
+
+export type PaymentStatus =
+  | "pending"
+  | "paid"
+  | "failed"
+  | "refunded"
+  | string;
+
+export interface CreateBookingInput {
+  vehicle_id: string | number;
+  start_date: string;
+  end_date: string;
+  start_time?: string;
+  end_time?: string;
+  total_price?: number;
+  total_amount?: number;
+  pickup_location?: string;
+  drop_location?: string;
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  payment_method?: string;
+  payment_status?: PaymentStatus;
+  delivery_requested?: boolean;
+  notes?: string;
+  [key: string]: any;
+}
+
+export interface Booking {
+  id: string | number;
+  booking_id?: string | number;
+  user_id?: string | number;
+  vehicle_id: string | number;
+  vehicle?: ApiVehicle;
+  start_date: string;
+  end_date: string;
+  start_time?: string;
+  end_time?: string;
+  total_price?: number;
+  total_amount?: number;
+  status: BookingStatus;
+  payment_status: PaymentStatus;
+  pickup_location?: string;
+  drop_location?: string;
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  cancellation_reason?: string;
+  rejection_reason?: string;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: any;
+}
+
+export interface BookingQueryParams {
+  skip?: number;
+  limit?: number;
+  status?: string;
+  date?: string;
+  search?: string;
+}
+
+export interface UpdateBookingStatusInput {
+  status: BookingStatus;
+  reason?: string;
+  notes?: string;
+}
+
+export interface UpdatePaymentStatusInput {
+  payment_status: PaymentStatus;
+  transaction_id?: string;
+  payment_method?: string;
+  notes?: string;
+}
+
+// ================= BOOKING RATING TYPES =================
+
+export interface CreateBookingRatingInput {
+  rating: number;
+  comment?: string;
+  review?: string;
+  cleanliness_rating?: number;
+  maintenance_rating?: number;
+  [key: string]: any;
+}
+
+export interface BookingRating {
+  id: string | number;
+  booking_id: string | number;
+  vehicle_id?: string | number;
+  vendor_id?: string | number;
+  user_id?: string | number;
+  rating: number;
+  comment?: string;
+  review?: string;
+  cleanliness_rating?: number;
+  maintenance_rating?: number;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: any;
+}
+

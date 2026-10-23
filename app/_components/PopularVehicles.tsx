@@ -92,8 +92,8 @@ export function PopularVehicles() {
                   {categoryBadge[v.category]}
                 </span>
                 <Image
-                  src={v.image}
-                  alt={v.name}
+                  src={v.image && v.image.trim() ? v.image.trim() : "/images/photos/v-himalayan.jpg"}
+                  alt={v.name || "Vehicle"}
                   fill
                   sizes="(min-width: 1280px) 200px, (min-width: 768px) 33vw, 50vw"
                   className="object-cover transition duration-300 group-hover:scale-110"

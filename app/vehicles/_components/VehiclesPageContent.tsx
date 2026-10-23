@@ -747,6 +747,14 @@ export function VehiclesPageContent() {
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {currentItems.map((vehicle) => {
                   const isWishlisted = wishlist.includes(vehicle.id);
+                  const safeImage =
+                    vehicle.image && typeof vehicle.image === "string" && vehicle.image.trim()
+                      ? vehicle.image.trim()
+                      : vehicle.category === "car"
+                      ? "/images/photos/v-thar.jpg"
+                      : vehicle.category === "scooter"
+                      ? "/images/photos/v-activa.jpg"
+                      : "/images/photos/v-himalayan.jpg";
                   return (
                     <div
                       key={vehicle.id}
@@ -756,8 +764,8 @@ export function VehiclesPageContent() {
                       <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
                         <Link href={`/vehicles/${vehicle.id}`} className="block size-full">
                           <Image
-                            src={vehicle.image}
-                            alt={vehicle.name}
+                            src={safeImage}
+                            alt={vehicle.name || "Vehicle"}
                             fill
                             sizes="(min-width: 1280px) 300px, (min-width: 640px) 50vw, 100vw"
                             className="object-cover group-hover:scale-105 transition-transform duration-500"

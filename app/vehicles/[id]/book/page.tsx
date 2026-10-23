@@ -22,22 +22,48 @@ function pick(value: string | string[] | undefined, valid: (v: string) => boolea
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { id } = await params;
-  const { vehicle } = await vehiclesApi.getVehicleById(id);
-  if (!vehicle) return { title: "Vehicle Not Found | RYPP" };
+  try {
+    const { id } = await params;
+    const { vehicle } = await vehiclesApi.getVehicleById(id);
+    if (!vehicle) return { title: "Book Vehicle | RYPP" };
 
-  return {
-    title: `Book ${vehicle.name} | RYPP`,
-    description: `Complete your booking for ${vehicle.name} in Bengaluru at ₹${vehicle.pricePerDay}/day.`,
-  };
+    return {
+      title: `Book ${vehicle.name} | RYPP`,
+      description: `Complete your booking for ${vehicle.name} in Bengaluru at ₹${vehicle.pricePerDay}/day.`,
+    };
+  } catch {
+    return { title: "Book Vehicle | RYPP" };
+  }
 }
 
 export default async function BookVehiclePage({ params, searchParams }: PageProps) {
-  const { id } = await params;
-  const { vehicle } = await vehiclesApi.getVehicleById(id);
-  if (!vehicle) notFound();
+  let id = "1";
+  try {
+    const p = await params;
+    if (p?.id) id = p.id;
+  } catch {
+    // fallback id
+  }
 
-  const query = await searchParams;
+  let vehicle: any = null;
+  try {
+    const res = await vehiclesApi.getVehicleById(id);
+    vehicle = res?.vehicle || null;
+  } catch (err) {
+    console.error(`[BookVehiclePage] Error retrieving vehicle ${id}:`, err);
+  }
+
+  if (!vehicle) {
+    notFound();
+  }
+
+  let query: Record<string, string | string[] | undefined> = {};
+  try {
+    query = (await searchParams) || {};
+  } catch {
+    query = {};
+  }
+
   const defaults = defaultTripDates();
   // dates/times can be handed over from the detail page's booking card; anything malformed falls back
   const isFutureDate = (v: string) => ISO_DATE.test(v) && v >= defaults.today;
