@@ -57,7 +57,18 @@ async function handleProxy(
     const { path } = await context.params;
     const subPath = (path || []).join("/");
     const search = request.nextUrl.search;
-    const targetUrl = `${REMOTE_API_BASE}/${subPath}${search}`;
+
+    // Next.js request.nextUrl.pathname strips trailing slashes, so inspect raw request.url
+    const rawUrl = request.url || "";
+    const urlWithoutQuery = rawUrl.split("?")[0];
+    const rawHasSlash = urlWithoutQuery.endsWith("/");
+    
+    // In FastAPI, root collections like /api/v1/bookings/ and /api/v1/vehicles/ strictly require trailing slashes
+    const isRootCollection = subPath === "api/v1/bookings" || subPath === "api/v1/vehicles";
+    const needsTrailingSlash = rawHasSlash || isRootCollection;
+
+    const targetUrl = `${REMOTE_API_BASE}/${subPath}${needsTrailingSlash ? "/" : ""}${search}`;
+    console.log(`%c[Proxy] ${method} -> ${targetUrl}`, "color: #06b6d4; font-weight: bold;");
 
     const headers: Record<string, string> = {
       "Accept": "application/json",

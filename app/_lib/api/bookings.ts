@@ -49,7 +49,7 @@ export const bookingsApi = {
         return response;
       } catch (err: any) {
         lastErr = err;
-        if (err.status !== 404 && err.status !== 307 && err.status !== 308) {
+        if (err.status !== 404 && err.status !== 307 && err.status !== 308 && err.status !== 405) {
           throw err;
         }
       }

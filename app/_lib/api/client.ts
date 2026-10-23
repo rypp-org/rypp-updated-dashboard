@@ -129,6 +129,7 @@ export async function apiClient<T>(
   let response: Response;
   try {
     response = await fetch(url, {
+      cache: "no-store",
       ...restOptions,
       headers,
     });

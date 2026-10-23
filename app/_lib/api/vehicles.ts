@@ -110,13 +110,22 @@ export function adaptApiVehicleToUi(apiVehicle: any): Vehicle {
       resolvedBrand = "Ola Electric";
     } else if (n.includes("ktm") || n.includes("duke")) {
       resolvedBrand = "KTM";
-    } else if (n.includes("tvs") || n.includes("jupiter")) {
+    } else if (n.includes("tvs") || n.includes("jupiter") || n.includes("i3")) {
       resolvedBrand = "TVS";
     } else if (validCategory === "car") {
       resolvedBrand = "Mahindra";
     } else {
       resolvedBrand = "Royal Enfield";
     }
+  }
+
+  // Harmonize display name with Admin Dashboard (e.g. "Royal Enfield Classic 350", "TVS i3", "Mahindra Thar")
+  if (
+    resolvedBrand &&
+    resolvedBrand !== "RYPP Fleet" &&
+    !resolvedName.toLowerCase().includes(resolvedBrand.toLowerCase())
+  ) {
+    resolvedName = `${resolvedBrand} ${resolvedName}`;
   }
 
   // Image resolution with guaranteed valid path
@@ -259,8 +268,8 @@ export const vehiclesApi = {
         max_price: params?.max_price,
         featured: params?.featured,
         page: params?.page ?? 1,
-        limit: params?.limit ?? 50,
-        sort_by: params?.sort_by,
+        limit: params?.limit ?? 100,
+        sort_by: params?.sort_by && params.sort_by !== "recommended" ? params.sort_by : undefined,
       };
 
       const candidatePaths = ["api/v1/vehicles", "vehicles"];

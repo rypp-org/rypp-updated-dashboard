@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
+  AlertTriangle,
   BadgeCheck,
   CalendarDays,
   Check,
@@ -366,7 +367,7 @@ export function BookingPageContent({
   const [trip, setTrip] = useState<Trip>(initialTrip);
   const updateTrip = (patch: Partial<Trip>) => setTrip((t) => ({ ...t, ...patch }));
 
-  const { user } = useAuth();
+  const { user, isAuthenticated, openAuthModal } = useAuth();
   const { city: userCity } = useLocation();
 
   // renter
@@ -435,6 +436,8 @@ export function BookingPageContent({
   const [payment, setPayment] = useState<PaymentMethod>("upi");
   const [paying, setPaying] = useState(false);
   const [bookingRef, setBookingRef] = useState("");
+  const [bookingError, setBookingError] = useState<string | null>(null);
+  const [isDbConfirmed, setIsDbConfirmed] = useState(false);
 
   const [showErrors, setShowErrors] = useState(false);
 
@@ -509,34 +512,89 @@ export function BookingPageContent({
     goTo("payment");
   }
 
+function formatTimeTo24H(timeStr: string): string {
+  if (!timeStr) return "10:00:00";
+  if (/^\d{2}:\d{2}:\d{2}$/.test(timeStr)) return timeStr;
+  if (/^\d{1,2}:\d{2}$/.test(timeStr)) return `${timeStr.padStart(5, "0")}:00`;
+  const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (!match) return "10:00:00";
+  let [_, hours, minutes, ampm] = match;
+  let h = parseInt(hours, 10);
+  if (ampm) {
+    const isPM = ampm.toUpperCase() === "PM";
+    const isAM = ampm.toUpperCase() === "AM";
+    if (isPM && h < 12) h += 12;
+    if (isAM && h === 12) h = 0;
+  }
+  return `${String(h).padStart(2, "0")}:${minutes}:00`;
+}
+
   async function pay() {
+    setBookingError(null);
     setPaying(true);
+
+    // Resolve an integer vehicle ID that matches backend DB schema
+    const parsedId = parseInt(String(vehicle.id), 10);
+    const numericVehicleId = !isNaN(parsedId) && parsedId > 0 ? parsedId : 1;
+
+    const pickupTime24 = formatTimeTo24H(trip.pickupTime);
+    const dropTime24 = formatTimeTo24H(trip.dropTime);
+
+    // Schema compliant with FastAPI BookingCreate
+    const payload: any = {
+      vehicle_id: numericVehicleId,
+      start_date: trip.pickupDate,
+      end_date: trip.dropDate,
+      pickup_location: city.trim() || "Bengaluru",
+      drop_location: city.trim() || "Bengaluru",
+      pickup_time: pickupTime24,
+      drop_time: dropTime24,
+      total_amount: total,
+      payable_price: total,
+      discount_amount: 0,
+      // Compatibility fields for schemas with extra properties
+      total_price: total,
+      start_time: trip.pickupTime,
+      end_time: trip.dropTime,
+      customer_name: name.trim(),
+      customer_email: email.trim(),
+      customer_phone: mobile.trim(),
+      payment_method: paymentLabel || payment,
+      payment_status: "paid",
+      status: "confirmed",
+      delivery_requested: delivery,
+    };
+
+    if (user?.id) {
+      payload.user_id = user.id;
+    }
+
     try {
-      const res = await bookingsApi.createBooking({
-        vehicle_id: vehicle.id,
-        start_date: trip.pickupDate,
-        end_date: trip.dropDate,
-        start_time: trip.pickupTime,
-        end_time: trip.dropTime,
-        total_amount: total,
-        total_price: total,
-        customer_name: name,
-        customer_email: email,
-        customer_phone: mobile,
-        pickup_location: city,
-        drop_location: city,
-        payment_method: paymentLabel || payment,
-        payment_status: "paid",
-        delivery_requested: delivery,
-      });
-      const generatedRef = String(res?.id || res?.booking_id || `RYPP-${Math.floor(100000 + Math.random() * 900000)}`);
-      setBookingRef(generatedRef.startsWith("RYPP-") ? generatedRef : `RYPP-${generatedRef}`);
+      console.log("%c[Booking Flow] Submitting booking to /api/v1/bookings/:", "color: #3b82f6; font-weight: bold;", payload);
+      const res = await bookingsApi.createBooking(payload);
+      console.log("%c[Booking Flow] API Booking Created Successfully in DB:", "color: #10b981; font-weight: bold;", res);
+
+      const realBookingId = res?.id || res?.booking_id;
+      if (realBookingId) {
+        setIsDbConfirmed(true);
+        setBookingRef(String(realBookingId).startsWith("RYPP-") ? String(realBookingId) : `RYPP-${realBookingId}`);
+      } else {
+        setIsDbConfirmed(true);
+        setBookingRef(`RYPP-${Date.now().toString().slice(-6)}`);
+      }
       goTo("confirmed");
     } catch (err: any) {
-      console.warn("[Booking Flow] API Booking fallback:", err);
-      // Fallback reference for smooth UI completion if backend auth/session required
-      setBookingRef(`RYPP-${Math.floor(100000 + Math.random() * 900000)}`);
-      goTo("confirmed");
+      console.error("[Booking Flow] API Booking Failed:", err);
+      const errorDetail =
+        err?.message ||
+        err?.detail ||
+        (Array.isArray(err?.data?.detail)
+          ? err.data.detail.map((d: any) => `${d.loc?.join(".") || "field"}: ${d.msg}`).join(", ")
+          : typeof err?.data?.detail === "string"
+          ? err.data.detail
+          : "Backend database rejected booking request.");
+
+      setBookingError(errorDetail);
     } finally {
       setPaying(false);
     }
@@ -909,6 +967,37 @@ export function BookingPageContent({
                   </span>
                   <span className="text-lg font-extrabold text-ink sm:text-xl">₹ {inr.format(total)}</span>
                 </div>
+
+                {/* Error Banner if API creation failed */}
+                {bookingError && (
+                  <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-800">
+                    <div className="flex items-center gap-2 font-bold text-red-900">
+                      <AlertTriangle className="size-4 shrink-0 text-red-600" />
+                      Booking Not Saved to Database
+                    </div>
+                    <p className="mt-1 text-red-700">
+                      {bookingError}
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      {!isAuthenticated ? (
+                        <button
+                          type="button"
+                          onClick={() => openAuthModal("login")}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-dark"
+                        >
+                          Sign In / Register
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={pay}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+                      >
+                        Try Submitting Again
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-5 flex gap-3">
                   <button

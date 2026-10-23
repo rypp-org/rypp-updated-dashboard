@@ -632,10 +632,19 @@ export function VehiclesPageContent() {
 
             {/* Counter info & Sort Dropdown */}
             <div className="flex flex-wrap items-center justify-between lg:justify-end gap-x-4 gap-y-2 text-xs">
-              <span className="text-muted font-medium">
+              <span className="text-muted font-medium inline-flex items-center gap-1.5">
                 <span className="hidden sm:inline">Showing </span>
                 <strong className="text-ink font-bold">{filteredVehicles.length}</strong> vehicles
                 <span className="hidden sm:inline"> in Bengaluru</span>
+                <button
+                  type="button"
+                  onClick={fetchVehicles}
+                  disabled={isLoadingVehicles}
+                  title="Refresh live fleet from database"
+                  className="ml-1 p-1 rounded-md text-muted hover:text-brand hover:bg-slate-100 transition"
+                >
+                  <RefreshCw className={`size-3.5 ${isLoadingVehicles ? "animate-spin text-brand" : ""}`} />
+                </button>
               </span>
 
               <div className="flex items-center gap-2">

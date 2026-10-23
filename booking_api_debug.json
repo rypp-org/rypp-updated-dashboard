@@ -1,0 +1,523 @@
+{
+  "fullBookingPostRoute": {
+    "tags": [
+      "Bookings"
+    ],
+    "summary": "Create Booking",
+    "operationId": "create_booking_api_v1_bookings__post",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/BookingCreate"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "201": {
+        "description": "Successful Response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BookingResponse"
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/HTTPValidationError"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "HTTPBearer": []
+      }
+    ]
+  },
+  "bookingCreateSchema": {
+    "properties": {
+      "vehicle_id": {
+        "type": "integer",
+        "title": "Vehicle Id"
+      },
+      "start_date": {
+        "type": "string",
+        "format": "date",
+        "title": "Start Date"
+      },
+      "end_date": {
+        "type": "string",
+        "format": "date",
+        "title": "End Date"
+      },
+      "pickup_location": {
+        "type": "string",
+        "maxLength": 255,
+        "title": "Pickup Location",
+        "examples": [
+          "Delhi Airport"
+        ]
+      },
+      "pickup_time": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "time"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Pickup Time",
+        "examples": [
+          "10:00:00"
+        ]
+      },
+      "drop_location": {
+        "type": "string",
+        "maxLength": 255,
+        "title": "Drop Location",
+        "examples": [
+          "Gurugram"
+        ]
+      },
+      "drop_time": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "time"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Drop Time",
+        "examples": [
+          "18:00:00"
+        ]
+      },
+      "total_amount": {
+        "anyOf": [
+          {
+            "type": "number",
+            "minimum": 0
+          },
+          {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Total Amount",
+        "examples": [
+          0
+        ]
+      },
+      "discount_amount": {
+        "anyOf": [
+          {
+            "type": "number",
+            "minimum": 0
+          },
+          {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Discount Amount",
+        "examples": [
+          0
+        ]
+      },
+      "payable_price": {
+        "anyOf": [
+          {
+            "type": "number",
+            "minimum": 0
+          },
+          {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Payable Price",
+        "examples": [
+          0
+        ]
+      },
+      "coupon": {
+        "anyOf": [
+          {
+            "type": "string",
+            "maxLength": 100
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Coupon",
+        "examples": [
+          "WELCOME10"
+        ]
+      }
+    },
+    "type": "object",
+    "required": [
+      "vehicle_id",
+      "start_date",
+      "end_date",
+      "pickup_location",
+      "drop_location"
+    ],
+    "title": "BookingCreate"
+  },
+  "bookingPaths": {
+    "/api/v1/admin/bookings": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get all bookings"
+    },
+    "/api/v1/admin/bookings/{booking_id}": {
+      "methods": [
+        "get",
+        "delete"
+      ],
+      "summary": "Get booking details"
+    },
+    "/api/v1/admin/bookings/{booking_id}/status": {
+      "methods": [
+        "patch"
+      ]
+    },
+    "/api/v1/bookings/": {
+      "methods": [
+        "post"
+      ],
+      "summary": "Create Booking",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BookingCreate"
+            }
+          }
+        },
+        "required": true
+      }
+    },
+    "/api/v1/bookings/my": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get My Bookings"
+    },
+    "/api/v1/bookings/my/ongoing": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get My Ongoing Bookings"
+    },
+    "/api/v1/bookings/my/upcoming": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get My Upcoming Bookings"
+    },
+    "/api/v1/bookings/my/completed": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get My Completed Bookings"
+    },
+    "/api/v1/bookings/my/cancelled": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get My Cancelled Bookings"
+    },
+    "/api/v1/bookings/{booking_id}": {
+      "methods": [
+        "get",
+        "delete"
+      ],
+      "summary": "Get Booking"
+    },
+    "/api/v1/bookings/owner/all": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get Owner Bookings"
+    },
+    "/api/v1/bookings/owner/today": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get Owner Today Bookings"
+    },
+    "/api/v1/bookings/owner/ongoing": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get Owner Ongoing Bookings"
+    },
+    "/api/v1/bookings/owner/upcoming": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get Owner Upcoming Bookings"
+    },
+    "/api/v1/bookings/owner/pending": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get Owner Pending Bookings"
+    },
+    "/api/v1/bookings/owner/completed": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get Owner Completed Bookings"
+    },
+    "/api/v1/bookings/owner/cancelled": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get Owner Cancelled Bookings"
+    },
+    "/api/v1/bookings/{booking_id}/approve": {
+      "methods": [
+        "patch"
+      ]
+    },
+    "/api/v1/bookings/{booking_id}/reject": {
+      "methods": [
+        "patch"
+      ]
+    },
+    "/api/v1/bookings/{booking_id}/complete": {
+      "methods": [
+        "patch"
+      ]
+    },
+    "/api/v1/bookings/{booking_id}/cancel": {
+      "methods": [
+        "patch"
+      ]
+    },
+    "/api/v1/bookings/{booking_id}/status": {
+      "methods": [
+        "patch"
+      ]
+    },
+    "/api/v1/bookings/{booking_id}/payment": {
+      "methods": [
+        "patch"
+      ]
+    },
+    "/api/v1/booking-ratings/{booking_id}": {
+      "methods": [
+        "post"
+      ],
+      "summary": "Create Booking Rating",
+      "parameters": [
+        {
+          "name": "booking_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "title": "Booking Id"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BookingRatingCreate"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/booking-ratings/booking/{booking_id}": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get Booking Rating"
+    },
+    "/api/v1/booking-ratings/vehicle/{vehicle_id}": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get Vehicle Ratings"
+    },
+    "/api/v1/booking-ratings/vendor/{vendor_id}": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get Vendor Ratings"
+    },
+    "/api/v1/booking-ratings/my": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get My Ratings"
+    },
+    "/api/v1/vehicle-switch-requests/booking/{booking_id}": {
+      "methods": [
+        "get"
+      ],
+      "summary": "Get Booking Vehicle Switch Requests"
+    }
+  },
+  "allPaths": [
+    "/api/v1/health",
+    "/api/v1/auth/register",
+    "/api/v1/auth/verify-email",
+    "/api/v1/auth/resend-otp",
+    "/api/v1/auth/login",
+    "/api/v1/auth/refresh",
+    "/api/v1/auth/me",
+    "/api/v1/auth/forgot-password",
+    "/api/v1/auth/verify-reset-otp",
+    "/api/v1/auth/reset-password",
+    "/api/v1/admin/login",
+    "/api/v1/admin/dashboard",
+    "/api/v1/admin/users",
+    "/api/v1/admin/users/{user_id}",
+    "/api/v1/admin/users/{user_id}/status",
+    "/api/v1/admin/vendors",
+    "/api/v1/admin/vendors/{vendor_id}",
+    "/api/v1/admin/vendors/{vendor_id}/approve",
+    "/api/v1/admin/vendors/{vendor_id}/reject",
+    "/api/v1/admin/vendors/{vendor_id}/status",
+    "/api/v1/admin/vehicles",
+    "/api/v1/admin/vehicles/{vehicle_id}",
+    "/api/v1/admin/vehicles/{vehicle_id}/status",
+    "/api/v1/admin/bookings",
+    "/api/v1/admin/bookings/{booking_id}",
+    "/api/v1/admin/bookings/{booking_id}/status",
+    "/api/v1/admin/referral/settings",
+    "/api/v1/superadmin/login",
+    "/api/v1/superadmin/admins",
+    "/api/v1/superadmin/admins/verify-otp",
+    "/api/v1/superadmin/admins/resend-otp",
+    "/api/v1/superadmin/admins/{admin_id}",
+    "/api/v1/superadmin/admins/{admin_id}/permissions",
+    "/api/v1/superadmin/admins/{admin_id}/permissions/grant-all",
+    "/api/v1/superadmin/admins/{admin_id}/permissions/revoke-all",
+    "/api/v1/admin-team/",
+    "/api/v1/admin-team/{team_member_id}",
+    "/api/v1/admin-team/{team_member_id}/permissions",
+    "/api/v1/admin-team/{team_member_id}/permissions/grant-all",
+    "/api/v1/admin-team/{team_member_id}/permissions/revoke-all",
+    "/api/v1/vendors/register",
+    "/api/v1/vendors/verify-email",
+    "/api/v1/vendors/resend-otp",
+    "/api/v1/vendors/login",
+    "/api/v1/vendors/forgot-password",
+    "/api/v1/vendors/verify-reset-otp",
+    "/api/v1/vendors/reset-password",
+    "/api/v1/vendors/refresh",
+    "/api/v1/vendors/me",
+    "/api/v1/vendors/logout",
+    "/api/v1/users/me",
+    "/api/v1/users/change-password",
+    "/api/v1/users/upload-profile-image",
+    "/api/v1/users/profile-image",
+    "/api/v1/vehicles/",
+    "/api/v1/vehicles/my",
+    "/api/v1/vehicles/search",
+    "/api/v1/vehicles/{vehicle_id}",
+    "/api/v1/vehicles/my/{vehicle_id}",
+    "/api/v1/vehicles/{vehicle_id}/images",
+    "/api/v1/vehicles/images/{image_id}",
+    "/api/v1/bookings/",
+    "/api/v1/bookings/my",
+    "/api/v1/bookings/my/ongoing",
+    "/api/v1/bookings/my/upcoming",
+    "/api/v1/bookings/my/completed",
+    "/api/v1/bookings/my/cancelled",
+    "/api/v1/bookings/{booking_id}",
+    "/api/v1/bookings/owner/all",
+    "/api/v1/bookings/owner/today",
+    "/api/v1/bookings/owner/ongoing",
+    "/api/v1/bookings/owner/upcoming",
+    "/api/v1/bookings/owner/pending",
+    "/api/v1/bookings/owner/completed",
+    "/api/v1/bookings/owner/cancelled",
+    "/api/v1/bookings/{booking_id}/approve",
+    "/api/v1/bookings/{booking_id}/reject",
+    "/api/v1/bookings/{booking_id}/complete",
+    "/api/v1/bookings/{booking_id}/cancel",
+    "/api/v1/bookings/{booking_id}/status",
+    "/api/v1/bookings/{booking_id}/payment",
+    "/api/v1/booking-ratings/{booking_id}",
+    "/api/v1/booking-ratings/booking/{booking_id}",
+    "/api/v1/booking-ratings/vehicle/{vehicle_id}",
+    "/api/v1/booking-ratings/vendor/{vendor_id}",
+    "/api/v1/booking-ratings/my",
+    "/api/v1/vendor-team/",
+    "/api/v1/vendor-team/{member_id}",
+    "/api/v1/vendor-team/tasks",
+    "/api/v1/vendor-team/members/{member_id}/tasks",
+    "/api/v1/vendor-team/tasks/{task_id}",
+    "/api/v1/vendor-team/tasks/{task_id}/start",
+    "/api/v1/vendor-team/tasks/{task_id}/complete",
+    "/api/v1/kyc/upload",
+    "/api/v1/kyc/my",
+    "/api/v1/kyc/{document_id}",
+    "/api/v1/kyc/admin/all",
+    "/api/v1/kyc/admin/{document_id}",
+    "/api/v1/kyc/admin/{document_id}/status",
+    "/api/v1/coupons/",
+    "/api/v1/coupons/active",
+    "/api/v1/coupons/{coupon_id}",
+    "/api/v1/coupons/{coupon_id}/activate",
+    "/api/v1/coupons/{coupon_id}/deactivate",
+    "/api/v1/coupons/apply",
+    "/api/v1/banners/active",
+    "/api/v1/banners/upload-image",
+    "/api/v1/banners/",
+    "/api/v1/banners/{banner_id}",
+    "/api/v1/banners/{banner_id}/activate",
+    "/api/v1/banners/{banner_id}/deactivate",
+    "/api/v1/wishlist/",
+    "/api/v1/wishlist/check/{vehicle_id}",
+    "/api/v1/wishlist/{vehicle_id}",
+    "/api/v1/user-locations/",
+    "/api/v1/user-locations/{location_id}",
+    "/api/v1/user-locations/{location_id}/default",
+    "/api/v1/wallet",
+    "/api/v1/wallet/credit",
+    "/api/v1/wallet/debit",
+    "/api/v1/wallet/transactions",
+    "/api/v1/payments/create-order",
+    "/api/v1/payments/{order_id}/verify",
+    "/api/v1/vehicle-switch-requests/",
+    "/api/v1/vehicle-switch-requests/my",
+    "/api/v1/vehicle-switch-requests/booking/{booking_id}",
+    "/api/v1/vehicle-switch-requests/{request_id}/decision",
+    "/"
+  ]
+}

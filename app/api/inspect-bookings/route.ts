@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 
 export async function GET() {
   try {
@@ -24,7 +26,17 @@ export async function GET() {
         bookingSchemas[key] = val;
       }
     }
-    return NextResponse.json({ paths: bookingPaths, schemas: bookingSchemas });
+    const output = {
+      allPaths: Object.keys(paths),
+      bookingPaths,
+      bookingSchemas,
+    };
+    try {
+      fs.writeFileSync(path.join(process.cwd(), "booking_api_debug.json"), JSON.stringify(output, null, 2), "utf8");
+    } catch (e: any) {
+      console.error("Failed to write booking_api_debug.json", e);
+    }
+    return NextResponse.json(output);
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
